@@ -188,7 +188,8 @@ void MQTTClient_sleep(long milliseconds)
 {
 	FUNC_ENTRY;
 #if defined(CONFIG_OS_FREERTOS)
-	vTaskDelay(milliseconds/portTICK_RATE_MS);
+	//vTaskDelay(milliseconds/portTICK_RATE_MS);
+	usleep(milliseconds*1000);
 #elif defined(WIN32) || defined(WIN64)
 	Sleep(milliseconds);
 #else
@@ -231,6 +232,7 @@ START_TIME_TYPE MQTTClient_start_clock(void)
 #if defined(CONFIG_OS_FREERTOS)
 long MQTTClient_elapsed(time_t start)
 {
+	usleep(10);
 	return rtc_time_get() - start;
 }
 #elif defined(WIN32) || defined(WIN64)

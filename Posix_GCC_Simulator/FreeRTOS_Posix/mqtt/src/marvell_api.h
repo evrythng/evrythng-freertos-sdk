@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <FreeRTOS.h>
 #include <task.h>
+
+#if 0
 #include <lwip/lwipopts.h>
 #include <lwip/opt.h>
 #include <lwip/sockets.h>
@@ -13,18 +15,39 @@
 #include <lwip/netdb.h>
 #include <lwip/err.h>
 #include <lwip/inet.h>
-#include <string.h>
 
-#define malloc pvPortMalloc
 #define realloc pvPortReAlloc
-#define free(ptr) vPortFree(ptr)
-
-#define difftime(t1, t0) (double)(t1 - t0)
 
 struct iovec {
 	void *iov_base;   /* Starting address */
 	size_t iov_len;   /* Number of bytes */
 };
+
+extern time_t rtc_time_get(void);
+void time(time_t *c_time);
+#else
+#include <semphr.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <fcntl.h>
+
+#define vSemaphoreDelete(...)
+#define rtc_time_get() time()
+#endif
+#include <string.h>
+
+#define malloc pvPortMalloc
+#define free(ptr) vPortFree(ptr)
+
+#define difftime(t1, t0) (double)(t1 - t0)
 
 //typedef unsigned short int sa_family_t;
 
@@ -34,9 +57,6 @@ struct iovec {
 
 #define time_t uint32_t
 
-extern time_t rtc_time_get(void);
-
-void time(time_t *c_time);
 //ssize_t writev(int d, const struct iovec *iov, int iovcnt);
 //#define writev lwip_write
 
