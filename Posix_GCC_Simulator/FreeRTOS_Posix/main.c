@@ -133,7 +133,14 @@
 #define THNG_ID "UVmAx2y2PVpRdQTCXPx3cwmb"
 #define API_KEY "MfwW3UTFrTfnI2MODiQoyNyfP1o26ZFHg1CGqzlutTyA0iDVwZJRa3XF3DYm7ZhpqQbex4auIe4xNFf0"
 #define TOPIC "thngs/UVmAx2y2PVpRdQTCXPx3cwmb/properties"
+
+#if !defined (OPENSSL)
 #define EVRYTHNG_URL "pubsub.evrythng.com:1883"
+#else
+#define EVRYTHNG_URL "ssl://pubsub.evrythng.com:8883"
+static const char *uristring = "ssl://pubsub.evrythng.com:8883";
+MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
+#endif
 
 MQTTClient client;
 MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;

@@ -38,9 +38,11 @@ void time(time_t *c_time);
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
+#include <stdbool.h>
 
 #define vSemaphoreDelete(...)
-#define rtc_time_get() time()
+#define rtc_time_get() time(NULL)
 #endif
 #include <string.h>
 

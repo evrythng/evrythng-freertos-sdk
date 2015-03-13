@@ -63,14 +63,13 @@ CFLAGS+= \
 		-DNO_HEAP_TRACKING \
 		-DNO_PERSISTENCE \
 		-DCONFIG_IPV6 \
-		-DNO_FILESYSTEM \
-#		-DTLSSOCKET \
+		-DOPENSSL \
 
 # Each subdirectory must supply rules for building sources it contributes
 mqtt/src/%.o: ../mqtt/src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -DUSE_STDIO=1 -D__GCC_POSIX__=1 $(CFLAGS) -I../mqtt/src -I.. -I../FreeRTOS_Kernel/include -I../FreeRTOS_Kernel/portable/GCC/Posix -O2 -Wall -c -fmessage-length=0 -pthread -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	gcc -DUSE_STDIO=1 -D__GCC_POSIX__=1 $(CFLAGS) -I../mqtt/src -I.. -I../FreeRTOS_Kernel/include -I../FreeRTOS_Kernel/portable/GCC/Posix -O2 -Wall -c -fmessage-length=0 -pthread -lssl -lcrypto -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
