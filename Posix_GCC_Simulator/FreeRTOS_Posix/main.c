@@ -175,11 +175,12 @@ void mqtt_run()
 
   MQTTClient_init();
 
+  log("%s", EVRYTHNG_URL);
   if(MQTTClient_create(&client, EVRYTHNG_URL, client_id, MQTTCLIENT_PERSISTENCE_NONE, NULL) != 0)
   {
 	err("Can't create client");
 	return;
-  }printf("123\n\r");
+  }
   if(MQTTClient_setCallbacks(client, client, connectionLost_callback, message_callback, NULL))
   {
 	err("Can't set callback");
