@@ -22,5 +22,6 @@ FileIO \
 Common_Demo/Minimal \
 Common_Demo/Full \
 AsyncIO \
+evrythng \
 mqtt/src \
 

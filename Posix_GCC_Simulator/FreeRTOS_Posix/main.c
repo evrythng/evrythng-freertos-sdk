@@ -122,8 +122,7 @@
 #include "AsyncIO/AsyncIOSocket.h"
 #include "AsyncIO/PosixMessageQueueIPC.h"
 
-#include "MQTTClient.h"
-#include "MQTTClientPersistence.h"
+#include "evrythng.h"
 
 //#define dbg(_fmt_, ...) printf(_fmt_"\n\r", ##__VA_ARGS__)
 #define dbg(_fmt_, ...)
@@ -132,33 +131,16 @@
 
 #define THNG_ID "UVmAx2y2PVpRdQTCXPx3cwmb"
 #define API_KEY "MfwW3UTFrTfnI2MODiQoyNyfP1o26ZFHg1CGqzlutTyA0iDVwZJRa3XF3DYm7ZhpqQbex4auIe4xNFf0"
-#define TOPIC "thngs/UVmAx2y2PVpRdQTCXPx3cwmb/properties"
 
 #if !defined (OPENSSL)
 #define EVRYTHNG_URL "pubsub.evrythng.com:1883"
 #else
 #define EVRYTHNG_URL "ssl://pubsub.evrythng.com:8883"
-static const char *uristring = "ssl://pubsub.evrythng.com:8883";
-MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;
 #endif
 
-MQTTClient client;
-MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-
-void connectionLost_callback(void* context, char* cause)
+void print_property_callback(char* str_json)
 {
-  err("Callback: connection lost");
-}
-
-int message_callback(void* context, char* topic_name, int topic_len, MQTTClient_message* message)
-{
-  dbg("topic: %s", topic_name);
-  log("Received: %s", (char*)message->payload);
-
-  MQTTClient_freeMessage(&message);
-  MQTTClient_free(topic_name);
-
-  return 1;
+  log("Received message: %s", str_json);
 }
 
 void mqtt_run()
@@ -173,46 +155,30 @@ void mqtt_run()
   client_id[9] = '\0';
   log("Client ID: %s", client_id);
 
-  MQTTClient_init();
-
-  log("%s", EVRYTHNG_URL);
-  if(MQTTClient_create(&client, EVRYTHNG_URL, client_id, MQTTCLIENT_PERSISTENCE_NONE, NULL) != 0)
-  {
-	err("Can't create client");
-	return;
-  }
-  if(MQTTClient_setCallbacks(client, client, connectionLost_callback, message_callback, NULL))
-  {
-	err("Can't set callback");
-	return;
-  }
-  conn_opts.keepAliveInterval = 10;
-  conn_opts.reliable = 0;
-  conn_opts.cleansession = 1;
-  conn_opts.username = "authorization";
-  conn_opts.password = API_KEY;
-
-#if !defined (OPENSSL)
-  conn_opts.struct_version = 1;
+#if defined (OPENSSL)
+  evrythng_config_t config;
+  log("Encription enabled");
+  config.url = EVRYTHNG_URL;
+  config.api_key = API_KEY;
+  config.client_id = client_id;
+  config.tls_server_uri = EVRYTHNG_URL;
+  config.cert_buffer = "../client.pem";
+  config.cert_buffer_size = sizeof("../client.pem");
+  config.enable_ssl = 1;
 #else
-  ssl_opts.enableServerCertAuth = 0;
-  //ssl_opts.trustStore = cert_buffer;
-  ssl_opts.trustStore = "../client.pem";
-  //ssl_opts.trustStore_size = sizeof(cert_buffer)-1;
-
-  conn_opts.serverURIcount = 1;
-  conn_opts.serverURIs = &uristring;
-  conn_opts.struct_version = 4;
-  conn_opts.ssl = &ssl_opts;
+  evrythng_config_t config = {
+	EVRYTHNG_URL,
+	api_key,
+	client_id
+  };
 #endif
 
-  log("MQTT Connecting");
-  if ((rc = MQTTClient_connect(client, &conn_opts)) != 0)
-  {
-    err("Failed to connect, return code %d", rc);
-    return;
+  log("Connecting");
+  while(EvrythngConfigure(&config) != EVRYTHNG_SUCCESS) {
+   log("Retry");
+   vTaskDelay(5000);
   }
-  log("MQTT Connected");
+  log("Evrythng client Connected");
 }
 
 void vMainQueueSendPassed( void )
@@ -235,48 +201,23 @@ void vApplicationIdleHook( void )
 #endif
 }
 
-void mqtt_pub(char *key, char *value)
-{
-  char data[64];
-  sprintf(data, "[{\"key\": \"%s\", \"value\": \"%s\"}]", key, value);
-  dbg("%s", data);
-  int rc = MQTTClient_publish(client, TOPIC, strlen(data), data, 0, 0, NULL);
-  if (rc == MQTTCLIENT_SUCCESS) {
-	log("Published %s: %s", key, value);
-  }
-  else {
-	err("rc=%d", rc);
-  }
-}
-
-void mqtt_sub(char *prop)
-{
-  char sub_topic[128];
-  sprintf(sub_topic, "%s/%s", TOPIC, prop);
-  int rc = MQTTClient_subscribe(client, sub_topic, 0);
-  if (rc == MQTTCLIENT_SUCCESS) {
-	log("Subscribed: %s", prop);
-  }
-  else {
-	err("rc=%d", rc);
-  }
-}
-
-static void mqtt_task(void)
+static void evrythng_task(void)
 {
   vTaskDelay(2000);
-  mqtt_sub("led");
+  EvrythngSubThngProperties(THNG_ID, 0, print_property_callback);
   while(1) {
-	mqtt_pub ("led", "1");
+	log("Publishing led: 1");
+	EvrythngPubThngProperty(THNG_ID, "led", "[{\"value\": \"1\"}]", 0, NULL);
 	vTaskDelay(5000);
-	mqtt_pub ("led", "0");
+	log("Publishing led: 0");
+	EvrythngPubThngProperty(THNG_ID, "led", "[{\"value\": \"0\"}]", 0, NULL);
 	vTaskDelay(5000);
   }
 }
 
 int main( void )
 {
-  xTaskCreate(mqtt_task, "mqtt_task", 1024, NULL, 1, NULL);
+  xTaskCreate(evrythng_task, "evrythng_task", 1024, NULL, 1, NULL);
   mqtt_run();
 
   vStartHookCoRoutines();

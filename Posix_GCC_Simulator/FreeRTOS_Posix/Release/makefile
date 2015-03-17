@@ -15,6 +15,7 @@ RM := rm -rf
 -include FreeRTOS_Kernel/portable/GCC/Posix/subdir.mk
 -include FileIO/subdir.mk
 -include mqtt/subdir.mk
+-include evrythng/subdir.mk
 -include Common_Demo/Minimal/subdir.mk
 -include Common_Demo/Full/subdir.mk
 -include AsyncIO/subdir.mk
