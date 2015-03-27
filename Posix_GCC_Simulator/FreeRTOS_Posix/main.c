@@ -50,34 +50,9 @@
 */
 
 /**
- * Creates all the demo application tasks and co-routines, then starts the
- * scheduler.
- *
- * Main. c also creates a task called "Print".  This only executes every
- * five seconds but has the highest priority so is guaranteed to get
- * processor time.  Its main function is to check that all the other tasks
- * are still operational.  Nearly all the tasks in the demo application
- * maintain a unique count that is incremented each time the task successfully
- * completes its function.  Should any error occur within the task the count is
- * permanently halted.  The print task checks the count of each task to ensure
- * it has changed since the last time the print task executed.  If any count is
- * found not to have changed the print task displays an appropriate message.
- * If all the tasks are still incrementing their unique counts the print task
- * displays an "OK" message.
- *
- * The LED flash tasks do not maintain a count as they already provide visual
- * feedback of their status.
- *
- * The print task blocks on the queue into which messages that require
- * displaying are posted.  It will therefore only block for the full 5 seconds
- * if no messages are posted onto the queue.
- *
- * Main. c also provides a demonstration of how the trace visualisation utility
- * can be used, and how the scheduler can be stopped.
- *
- * \page MainC main.c
- * \ingroup DemoFiles
- * <HR>
+ * The demo application for FreeRTOS which demonstrates how to
+ * work with MQTT client. It connects to the Evrythng cloud and
+ * sends publish messages every five seconds.
  */
 
 /* System headers. */
@@ -138,12 +113,22 @@
 #define EVRYTHNG_URL "ssl://pubsub.evrythng.com:8883"
 #endif
 
+/** @brief This is a callback function which is called on the
+ *  	   property receiving. It prints the received JSON
+ *  	   string.
+ *  
+ * @param[in] str_json  The JSON string received from the 
+ *  	 Evrythng cloud.
+ */
 void print_property_callback(char* str_json)
 {
   log("Received message: %s", str_json);
 }
 
-void mqtt_run()
+/** @brief This function configures Evrythng client and connects
+ *  	   to the Evrythng cloud.
+ */
+void evrythng_run()
 {
   int rc = 0;
 
@@ -181,11 +166,17 @@ void mqtt_run()
   log("Evrythng client Connected");
 }
 
+/** @brief This is queue trace send hook which is used by
+ *  	   FreeRTOS.
+ */
 void vMainQueueSendPassed( void )
 {
 	/* This is just an example implementation of the "queue send" trace hook. */
 }
 
+/** @brief This is application idle hook which is used by
+ *  	   FreeRTOS.
+ */
 void vApplicationIdleHook( void )
 {
 	/* The co-routines are executed in the idle task using the idle task
@@ -201,6 +192,9 @@ void vApplicationIdleHook( void )
 #endif
 }
 
+/** @brief This task sends publish messages to the Evrythng
+ *  	   cloud every 5 seconds.
+ */
 static void evrythng_task(void)
 {
   vTaskDelay(2000);
@@ -215,10 +209,13 @@ static void evrythng_task(void)
   }
 }
 
+/** @brief This is main demo application function. It creates
+ *  	   demo application task.
+ */
 int main( void )
 {
   xTaskCreate(evrythng_task, "evrythng_task", 1024, NULL, 1, NULL);
-  mqtt_run();
+  evrythng_run();
 
   vStartHookCoRoutines();
   vTaskStartScheduler();
