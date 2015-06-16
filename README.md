@@ -63,12 +63,3 @@ Publishing led: 0
 Received message: [{"id":"5515650eb09e71a487846218","timestamp":1427465486820,"key":"led","value":"0"}]
 ```
 
-#define THNG_ID "UCYg8n4ePBpRKpBsraepsbdb"
-#define API_KEY "VGP9Ee2r5RWKGlHqKKZaXxN7eIol1xC8EEWEAUvxuIPpE3iciTXF2msxzTSihmYnwgMOCihfARhBHknG"
-#define EVRYTHNG_URL "tcp://mqtt.evrythng.com:1883"
-#define EVRYTHNG_URL "ssl://mqtt.evrythng.com:443"
-
-
-./build_debug/evrythng-demo --pub -u ssl://mqtt.evrythng.com:443 -t UCYg8n4ePBpRKpBsraepsbdb -k VGP9Ee2r5RWKGlHqKKZaXxN7eIol1xC8EEWEAUvxuIPpE3iciTXF2msxzTSihmYnwgMOCihfARhBHknG -n led -c `pwd`/client.pem
-
-
