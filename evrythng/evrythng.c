@@ -65,6 +65,31 @@ static void evrythng_log(evrythng_handle_t handle, evrythng_log_level_t level, c
 #define error(fmt, ...) evrythng_log(handle, EVRYTHNG_LOG_ERROR, fmt,  ##__VA_ARGS__);
 
 
+void default_log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
+{
+    char msg[512];
+
+    unsigned n = vsnprintf(msg, sizeof msg, fmt, vl);
+    if (n >= sizeof msg)
+        msg[sizeof msg - 1] = '\0';
+
+    switch (level)
+    {
+        case EVRYTHNG_LOG_ERROR:
+            printf("ERROR: ");
+            break;
+        case EVRYTHNG_LOG_WARNING:
+            printf("WARNING: ");
+            break;
+        default:
+        case EVRYTHNG_LOG_DEBUG:
+            printf("DEBUG: ");
+            break;
+    }
+    printf("%s\n", msg);
+}
+
+
 evrythng_return_t evrythng_init_handle(evrythng_handle_t* handle)
 {
     if (!handle) 
@@ -95,10 +120,30 @@ evrythng_return_t evrythng_init_handle(evrythng_handle_t* handle)
 void evrythng_destroy_handle(evrythng_handle_t handle)
 {
     if (!handle) return;
+    if (handle->initialized && MQTTClient_isConnected(handle->mqtt_client)) MQTTClient_disconnect(handle->mqtt_client, 1000);
+    if (handle->initialized && handle->mqtt_client) MQTTClient_destroy(&handle->mqtt_client);
     if (handle->url) free(handle->url);
     if (handle->key) free(handle->key);
     if (handle->ca_buf) free(handle->ca_buf);
     if (handle->client_id) free(handle->client_id);
+
+    pub_callback_t **_pub_callback = &handle->pub_callbacks;
+    while(*_pub_callback) 
+    {
+        pub_callback_t* _pub_callback_tmp = *_pub_callback;
+        _pub_callback = &(*_pub_callback)->next;
+        free(_pub_callback_tmp);
+    }
+
+    sub_callback_t **_sub_callback = &handle->sub_callbacks;
+    while(*_sub_callback) 
+    {
+        sub_callback_t* _sub_callback_tmp = *_sub_callback;
+        _sub_callback = &(*_sub_callback)->next;
+        free(_sub_callback_tmp->topic);
+        free(_sub_callback_tmp);
+    }
+
     free(handle);
     handle = 0;
 }
@@ -175,7 +220,7 @@ evrythng_return_t evrythng_set_certificate(evrythng_handle_t handle, const char*
 
 evrythng_return_t evrythng_set_log_callback(evrythng_handle_t handle, evrythng_log_callback callback)
 {
-    if (!handle || !callback)
+    if (!handle)
         return EVRYTHNG_BAD_ARGS;
 
     handle->log_callback = callback;
@@ -198,16 +243,22 @@ evrythng_return_t evrythng_set_qos(evrythng_handle_t handle, int qos)
 static evrythng_return_t add_sub_callback(evrythng_handle_t handle, char* topic, int qos, sub_callback *callback)
 {
     sub_callback_t **_sub_callbacks = &handle->sub_callbacks;
-    while(*_sub_callbacks) {
+    while(*_sub_callbacks) 
+    {
         _sub_callbacks = &(*_sub_callbacks)->next;
     }
-    if ((*_sub_callbacks = (sub_callback_t*)malloc(sizeof(sub_callback_t))) == NULL) {
+
+    if ((*_sub_callbacks = (sub_callback_t*)malloc(sizeof(sub_callback_t))) == NULL) 
+    {
         return EVRYTHNG_MEMORY_ERROR;
     }
-    if (((*_sub_callbacks)->topic = (char*)malloc(strlen(topic) + 1)) == NULL) {
+
+    if (((*_sub_callbacks)->topic = (char*)malloc(strlen(topic) + 1)) == NULL) 
+    {
         free(*_sub_callbacks);
         return EVRYTHNG_MEMORY_ERROR;
     }
+
     strcpy((*_sub_callbacks)->topic, topic);
     (*_sub_callbacks)->qos = qos;
     (*_sub_callbacks)->callback = callback;
@@ -219,18 +270,23 @@ static evrythng_return_t add_sub_callback(evrythng_handle_t handle, char* topic,
 
 static evrythng_return_t add_pub_callback(evrythng_handle_t handle, MQTTClient_deliveryToken dt, pub_callback *callback)
 {
-    pub_callback_t **_pub_callbacks=&handle->pub_callbacks;
-    while(*_pub_callbacks) {
-        if ((*_pub_callbacks)->callback == NULL) {
+    pub_callback_t **_pub_callbacks = &handle->pub_callbacks;
+    while(*_pub_callbacks) 
+    {
+        if ((*_pub_callbacks)->callback == NULL) 
+        {
             (*_pub_callbacks)->dt = dt;
             (*_pub_callbacks)->callback = callback;
             return EVRYTHNG_SUCCESS;
         }
         _pub_callbacks = &(*_pub_callbacks)->next;
     }
-    if ((*_pub_callbacks = (pub_callback_t*)malloc(sizeof(pub_callback_t))) == NULL) {
+
+    if ((*_pub_callbacks = (pub_callback_t*)malloc(sizeof(pub_callback_t))) == NULL) 
+    {
         return EVRYTHNG_MEMORY_ERROR;
     }
+
     (*_pub_callbacks)->dt = dt;
     (*_pub_callbacks)->callback = callback;
     (*_pub_callbacks)->next = NULL;
@@ -262,7 +318,7 @@ int message_callback(void* context, char* topic_name, int topic_len, MQTTClient_
     evrythng_handle_t handle = (evrythng_handle_t)context;
 
     debug("topic: %s", topic_name);
-    debug("received: %s", (char*)message->payload);
+    debug("received message, length %d, payload: %s", message->payloadlen, (char*)message->payload);
 
     if (message->payloadlen < 3) 
     {
@@ -275,7 +331,7 @@ int message_callback(void* context, char* topic_name, int topic_len, MQTTClient_
     {
         if (strcmp((*_sub_callbacks)->topic, topic_name) == 0) 
         {
-            (*((*_sub_callbacks)->callback))((char*)message->payload);
+            (*((*_sub_callbacks)->callback))((const char*)message->payload);
         }
         _sub_callbacks = &(*_sub_callbacks)->next;
     }
@@ -365,13 +421,13 @@ evrythng_return_t evrythng_connect_internal(evrythng_handle_t handle)
     if (MQTTClient_isConnected(handle->mqtt_client)) 
         return EVRYTHNG_SUCCESS;
 
-    debug("MQTT Connecting");
+    debug("MQTT connecting");
     if ((rc = MQTTClient_connect(handle->mqtt_client, &handle->mqtt_conn_opts)) != MQTTCLIENT_SUCCESS)
     {
         error("Failed to connect, return code %d", rc);
         return EVRYTHNG_CONNECTION_FAILED;
     }
-    debug("MQTT Connected");
+    debug("MQTT connected");
 
     sub_callback_t **_sub_callbacks = &handle->sub_callbacks;
     while(*_sub_callbacks) 
@@ -387,6 +443,29 @@ evrythng_return_t evrythng_connect_internal(evrythng_handle_t handle)
         }
         _sub_callbacks = &(*_sub_callbacks)->next;
     }
+
+    return EVRYTHNG_SUCCESS;
+}
+
+
+evrythng_return_t evrythng_disconnect(evrythng_handle_t handle)
+{
+    if (!handle)
+        return EVRYTHNG_BAD_ARGS;
+
+    if (!handle->initialized)
+        return EVRYTHNG_SUCCESS;
+
+    if (!MQTTClient_isConnected(handle->mqtt_client))
+        return EVRYTHNG_SUCCESS;
+
+    int rc = MQTTClient_disconnect(handle->mqtt_client, 0);
+    if (rc != MQTTCLIENT_SUCCESS)
+    {
+        error("failed to disconnect: rc = %d", rc);
+        return EVRYTHNG_FAILURE;
+    }
+    debug("MQTT disconnected");
 
     return EVRYTHNG_SUCCESS;
 }
@@ -443,7 +522,7 @@ static evrythng_return_t evrythng_publish(
     debug("publish topic: %s", pub_topic);
 
     MQTTClient_deliveryToken dt;
-    rc = MQTTClient_publish(handle->mqtt_client, pub_topic, strlen(property_json), (void*)property_json, handle->qos, 0, &dt);
+    rc = MQTTClient_publish(handle->mqtt_client, pub_topic, strlen(property_json) + 1, (void*)property_json, handle->qos, 0, &dt);
     if (rc == MQTTCLIENT_SUCCESS) 
     {
         debug("published message: %s", property_json);

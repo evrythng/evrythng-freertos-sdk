@@ -22,7 +22,8 @@
 #define _EVRYTHNG_H
 
 
-#include <stdint.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 
 typedef enum _evrythng_return_t 
@@ -53,6 +54,11 @@ typedef enum
 typedef void (*evrythng_log_callback)(evrythng_log_level_t level, const char* fmt, va_list vl); 
 
 
+/** @brief Default callback using stdout to print messages.
+ */
+void default_log_callback(evrythng_log_level_t level, const char* fmt, va_list vl);
+
+
 /** @brief Pointer to internal context used by all the functions.
  */
 typedef struct evrythng_ctx_t* evrythng_handle_t;
@@ -62,7 +68,7 @@ typedef struct evrythng_ctx_t* evrythng_handle_t;
  *  	   which is called on message arrival from the Evrythng
  *  	   cloud.
  */
-typedef void sub_callback(char* str_json);
+typedef void sub_callback(const char* str_json);
 
 
 /** @brief Callback prototype used for publish functions,
@@ -174,7 +180,10 @@ evrythng_return_t evrythng_set_certificate(evrythng_handle_t handle, const char*
 
 /** @brief Set log callback
  *
- * Use this function to set log callback to internal context.
+ * Use this function to set log callback to internal context 
+ * otherwise a null pointer will be setup.  One can use default 
+ * internal log function with output to stdout.
+ * To disable logging set 0 value or empty function.
  *
  * @param[in] handle A pointer to context handle.
  * @param[in] callback A pointer to log callback.
@@ -200,6 +209,20 @@ evrythng_return_t evrythng_set_log_callback(evrythng_handle_t handle, evrythng_l
  *            \b EVRYTHNG_SUCCESS      on success \n
  */
 evrythng_return_t evrythng_connect(evrythng_handle_t handle);
+
+
+/** @brief Disconnect from Evrythng cloud.
+ *
+ * Use this function to disconnect from Evrythng cloud.
+ *
+ * @param[in] handle    A handle to context which contains Evrythng client configuration
+ *                      used for connecting to the Evrythng cloud.
+ *
+ * @return    \b EVRYTHNG_BAD_ARGS if handle is a null pointer \n
+ *            \b EVRYTHNG_FAILURE if mqtt client creation/setup error occured \n
+ *            \b EVRYTHNG_SUCCESS      on success \n
+ */
+evrythng_return_t evrythng_disconnect(evrythng_handle_t handle);
 
 
 /** @brief Publish a single property to a given thing.
@@ -250,7 +273,7 @@ evrythng_return_t evrythng_subscribe_thng_property(
 
 /** @brief Subscribe to all properties of the thing.
  * 
- * This function attempts to subscribe to all properties of the thing.
+ * This function subscribes to all properties of the thing.
  *
  * @param[in] handle   A context handle.
  * @param[in] thng_id  A thing ID. 

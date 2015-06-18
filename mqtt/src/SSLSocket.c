@@ -415,7 +415,7 @@ int SSLSocket_initialize()
 #ifdef TODO_ITEMS		
 	ERR_load_crypto_strings();
 #endif
-	SSL_load_error_strings();
+	//SSL_load_error_strings();
 	
 	/* OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to SSL_library_init(). 
 	Applications which need to use SHA2 in earlier versions of OpenSSL should call 

@@ -29,6 +29,8 @@
 #include "LinkedList.h"
 #include "Clients.h"
 
+#include <stdbool.h>
+
 /*BE
 include "Socket"
 include "LinkedList"

@@ -6,6 +6,8 @@ set(COMMON_PREFIX CMakeTimestamps)
 set(FreeRTOS_dir ${PROJECT_SOURCE_DIR}/FreeRTOS_Posix)
 set(FreeRTOS_Kernel_dir ${FreeRTOS_dir}/FreeRTOS_Kernel)
 
+add_subdirectory(${PROJECT_SOURCE_DIR}/evrythng/tests)
+
 include_directories(${PROJECT_SOURCE_DIR}/evrythng)
 include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix)
 include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/FreeRTOS_Kernel/include)
