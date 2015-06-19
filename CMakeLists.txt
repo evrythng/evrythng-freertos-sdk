@@ -12,7 +12,6 @@ include_directories(${PROJECT_SOURCE_DIR}/evrythng)
 include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix)
 include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/FreeRTOS_Kernel/include)
 include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/FreeRTOS_Kernel/portable/GCC/Posix)
-#include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/Common_Demo/include)
 include_directories(${PROJECT_SOURCE_DIR}/mqtt/src)
 
 add_definitions(-DOPENSSL)
