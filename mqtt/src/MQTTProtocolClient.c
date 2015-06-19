@@ -48,6 +48,7 @@
 void Protocol_processPublication(Publish* publish, Clients* client);
 void MQTTProtocol_closeSession(Clients* client, int sendwill);
 
+extern mutex_type mqttclient_mutex;
 extern MQTTProtocol state;
 extern ClientStates* bstate;
 
@@ -514,11 +515,16 @@ void MQTTProtocol_keepalive(time_t now)
 	ListElement* current = NULL;
 
 	FUNC_ENTRY;
+	Thread_lock_mutex(mqttclient_mutex);
 	ListNextElement(bstate->clients, &current);
+	Thread_unlock_mutex(mqttclient_mutex);
 	while (current)
 	{
-		Clients* client =	(Clients*)(current->content);
+        Thread_lock_mutex(mqttclient_mutex);
+		Clients* client = (Clients*)(current->content);
 		ListNextElement(bstate->clients, &current); 
+        Thread_unlock_mutex(mqttclient_mutex);
+
 		if (client->connected && client->keepAliveInterval > 0 &&
 			(difftime(now, client->net.lastSent) >= client->keepAliveInterval ||
 					difftime(now, client->net.lastReceived) >= client->keepAliveInterval))

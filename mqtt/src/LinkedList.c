@@ -403,6 +403,12 @@ void ListFreeNoContent(List* aList)
  */
 ListElement* ListNextElement(List* aList, ListElement** pos)
 {
+    if (!aList || !aList->count)
+    {
+        *pos = 0;
+        return 0;
+    }
+
 	return *pos = (*pos == NULL) ? aList->first : (*pos)->next;
 }
 

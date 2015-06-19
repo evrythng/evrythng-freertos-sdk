@@ -29,7 +29,9 @@
 #include "LinkedList.h"
 #include "Clients.h"
 
+#ifndef CONFIG_OS_FREERTOS
 #include <stdbool.h>
+#endif
 
 /*BE
 include "Socket"

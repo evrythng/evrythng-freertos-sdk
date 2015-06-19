@@ -83,7 +83,7 @@ ClientStates* bstate = &ClientState;
 MQTTProtocol state;
 
 #if defined(CONFIG_OS_FREERTOS)
-static mutex_type mqttclient_mutex;
+mutex_type mqttclient_mutex;
 extern mutex_type heap_mutex;
 
 void MQTTClient_init()
@@ -93,7 +93,7 @@ void MQTTClient_init()
 }
 #define WINAPI
 #elif defined(WIN32) || defined(WIN64)
-static mutex_type mqttclient_mutex = NULL;
+mutex_type mqttclient_mutex = NULL;
 extern mutex_type stack_mutex;
 extern mutex_type heap_mutex;
 extern mutex_type log_mutex;
@@ -123,7 +123,7 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 }
 #else
 static pthread_mutex_t mqttclient_mutex_store = PTHREAD_MUTEX_INITIALIZER;
-static mutex_type mqttclient_mutex = &mqttclient_mutex_store;
+mutex_type mqttclient_mutex = &mqttclient_mutex_store;
 
 void MQTTClient_init()
 {
@@ -352,9 +352,12 @@ void MQTTClient_terminate(void)
 	MQTTClient_stop();
 	if (initialized)
 	{
+        Thread_lock_mutex(mqttclient_mutex);
 		ListFree(bstate->clients);
+        bstate = &ClientState;
 		ListFree(handles);
 		handles = NULL;
+        Thread_unlock_mutex(mqttclient_mutex);
 		Socket_outTerminate();
 #if defined(OPENSSL)
 		SSLSocket_terminate();
@@ -408,8 +411,11 @@ void MQTTClient_destroy(MQTTClient* handle)
 #endif
 		MQTTClient_emptyMessageQueue(m->c);
 		MQTTProtocol_freeClient(m->c);
+
 		if (!ListRemove(bstate->clients, m->c))
+        {
 			Log(LOG_ERROR, 0, NULL);
+        }
 		else
 			Log(TRACE_MIN, 1, NULL, saved_clientid, saved_socket);
 		free(saved_clientid);
