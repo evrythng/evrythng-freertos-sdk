@@ -54,7 +54,7 @@ typedef enum
 typedef void (*evrythng_log_callback)(evrythng_log_level_t level, const char* fmt, va_list vl); 
 
 
-/** @brief Default callback using stdout to print messages.
+/** @brief Default callback using stdout to print messages. Output buffer is limited to 128 characters.
  */
 void default_log_callback(evrythng_log_level_t level, const char* fmt, va_list vl);
 
@@ -64,11 +64,18 @@ void default_log_callback(evrythng_log_level_t level, const char* fmt, va_list v
 typedef struct evrythng_ctx_t* evrythng_handle_t;
 
 
+/** @brief Connection lost callback prototype.
+ */
+typedef void (*connection_lost_callback)(evrythng_handle_t handle); 
+
+
 /** @brief Callback prototype used for subscribe functions,
  *  	   which is called on message arrival from the Evrythng
  *  	   cloud.
+ *
+ *  Note that str_json string  may not end with a \0 character.
  */
-typedef void sub_callback(const char* str_json);
+typedef void sub_callback(const char* str_json, size_t length);
 
 
 /** @brief Callback prototype used for publish functions,
@@ -192,6 +199,19 @@ evrythng_return_t evrythng_set_certificate(evrythng_handle_t handle, const char*
  *            \b EVRYTHNG_SUCCESS      on success \n
  */
 evrythng_return_t evrythng_set_log_callback(evrythng_handle_t handle, evrythng_log_callback callback);
+
+
+/** @brief Set callback on connection lost
+ *
+ * Use this function to set callback that will be called on connection lost.
+ *
+ * @param[in] handle A pointer to context handle.
+ * @param[in] callback A pointer to log callback.
+ *
+ * @return    \b EVRYTHNG_BAD_ARGS     if handle or callback is a null pointer \n
+ *            \b EVRYTHNG_SUCCESS      on success \n
+ */
+evrythng_return_t evrythng_set_conlost_callback(evrythng_handle_t handle, connection_lost_callback callback);
 
 
 /** @brief Connect to Evrythng cloud.
