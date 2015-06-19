@@ -63,9 +63,6 @@ build_dir:
 		cmake $(PROJECT_DIR) -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE); \
 	fi
 
-tags:
-	ctags -R --c++-kinds=+p --fields=+iaS --extra=+q 
-
 %:: build_dir
 	$(MAKE) -C $(BUILD_DIR) -f Makefile $@
 

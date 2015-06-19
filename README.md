@@ -1,65 +1,84 @@
 # evrythng-freertos-sdk
 
-# Intro
+## Overview
 
-An MQTT based Evrythng demo application for the FreeRTOS simulator.
+A FreeRTOS EVRYTHNG SDK based on Paho MQTT library and Posix GCC Eclipse FreeRTOS Simulator. 
+Contains demo application and unit tests to demonstrate the use of API functions.
 
-# Overview
+## Requirements
 
-The Evrythng demo application uses Evrythng API to work with Evrythng cloud. Demo applicatio is running on the FreeRTOS simulator.
+In order to compile sdk and run tests you should have the following software installed:
 
-## EVRYTHNG SDK Functions
+* Standart GCC toolchain
+* make
+* CMake
+* Mosquitto MQTT broker running on a local machine with default settings.
 
-* All Evrythng API functions are described in the following file:
+The sdk was build and tested using the following versions of software:
+
+* Ubuntu x86_64 with 3.16.0-33-generic kernel
+* gcc (Ubuntu 4.8.2-19ubuntu1) 4.8.2
+* GNU Make 3.81
+* cmake version 2.8.12.2
+* mosquitto version 1.4.2
+
+## Building
+
+Building an sdk, demo application and tests is as easy as typing
 ```
-Posix_GCC_Simulator/FreeRTOS_Posix/evrythng/evrythng.h
-```
-
-# Demo Application
-
-* Location
-```
-Posix_GCC_Simulator/FreeRTOS_Posix/main.c
-```
-* The demo application for FreeRTOS demonstrates how to work with MQTT client. It connects to the Evrythng cloud and sends publish messages every five seconds.
-
-## Compile and execution instructions
-
-The instructions are the following:
-
-* Copy certificate to file: 
-```
-Posix_GCC_Simulator/FreeRTOS_Posix/client.pem
-```
-
-* Build evrythng demo application using the next command:
-```
-cd Posix_GCC_Simulator/FreeRTOS_Posix/Release
 make
 ```
-
-* Run demo application:
+by default a debug version is built in "build_debug" directory. 
+In order to build a release version you have to type
 ```
-./FreeRTOS_Posix
+make DEBUG=0
+```
+release version will be built in "build" directory.
+
+Additionally you can set VERBOSE to 1 to see the full cmake output (0 by default) 
+and BUILD_DIR option to change the output build directory. For example the command:
+```
+make DEBUG=0 BUILD_DIR=release VERBOSE=1
+```
+will build release version using "release" directory with full cmake output.
+
+To clean the output directory type
+```
+make clean
+```
+To delete the output directory
+```
+make cleanall
+```
+or simply rm -rf build_dir
+
+Note: that you should use DEBUG and BUILD_DIR options with all make commands if you used it to build the sdk.
+
+## Doxygen documentation
+
+To read API documentation type
+```
+make docs
+```
+and open index file with the browser, in Ubuntu
+```
+gnome-open docs/html/index.html
 ```
 
-## How the demo application works
-
-* Demo application subscribes to all the properties
-* Demo application publishes "led" property every five seconds
-
-# Sample execution
-
+## Running tests
+To run tests type 
 ```
-./FreeRTOS_Posix 
-Running as PID: 8400
-Client ID: 367535629
-Encription enabled
-Connecting
-Evrythng client Connected
-Publishing led: 1
-Received message: [{"id":"55156509b09e71a487846207","timestamp":1427465481825,"key":"led","value":"1"}]
-Publishing led: 0
-Received message: [{"id":"5515650eb09e71a487846218","timestamp":1427465486820,"key":"led","value":"0"}]
+make runtests
 ```
+Note that local MQTT broker mosquitto should be installed and running.
+Optionally you can change the mqtt broker address tests connect to by modifying 
+MQTT_BROKER_TCP_URL definition in ./evrythng/tests/tests.c
 
+## Demo Application
+
+After sucessfull compilation you can launch demo application via ${build_dir}/evrythng-demo command.
+```
+./build_debug/evrythng-demo -h
+```
+will print help. Add "-c `pwd`/client.pem" option while establishing secure connection to ssl://mqtt.evrythng.com.
+Using "--pub" demo applicaton will send random values from [0,100] range to provided property every 2 seconds.
