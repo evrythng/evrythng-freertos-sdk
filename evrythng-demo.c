@@ -33,13 +33,11 @@ typedef struct _cmd_opt {
 /** @brief This is a callback function which is called on the
  *  	   property receiving. It prints the received JSON
  *  	   string.
- *  
- * @param[in] str_json  The JSON string received from the 
- *  	 Evrythng cloud.
  */
-void print_property_callback(const char* str_json)
+void print_property_callback(const char* str_json, size_t len)
 {
-    log("Received message: %s", str_json);
+    char msg[len+1]; snprintf(msg, sizeof msg, "%s", str_json);
+    log("Received message: %s", msg);
 }
 
 
@@ -85,6 +83,35 @@ static void evrythng_task(void* pvParameters)
     }
 }
 
+
+void log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
+{
+    char msg[512];
+
+    unsigned n = vsnprintf(msg, sizeof msg, fmt, vl);
+    if (n >= sizeof msg)
+        msg[sizeof msg - 1] = '\0';
+
+    switch (level)
+    {
+        case EVRYTHNG_LOG_ERROR:
+            printf("ERROR: ");
+            break;
+        case EVRYTHNG_LOG_WARNING:
+            printf("WARNING: ");
+            break;
+        default:
+        case EVRYTHNG_LOG_DEBUG:
+            printf("DEBUG: ");
+            break;
+    }
+    printf("%s\n", msg);
+}
+
+void conlost_callback(evrythng_handle_t h)
+{
+    log("connection lost, exiting...");
+}
 
 void print_usage() {
     log("Usage: evrtthng_demo -s|-p -u URL -t THNG_ID -k KEY -n PROPERTY_NAME [-v VALUE] [-c CA_FILE]");
@@ -156,7 +183,8 @@ int main(int argc, char *argv[])
     xTaskCreate(evrythng_task, (signed char*)"evrythng_task", 1024, (void*)&opts, 1, NULL);
 
     evrythng_init_handle(&opts.evt_handle);
-    evrythng_set_log_callback(opts.evt_handle, default_log_callback);
+    evrythng_set_log_callback(opts.evt_handle, log_callback);
+    evrythng_set_conlost_callback(opts.evt_handle, conlost_callback);
     evrythng_set_url(opts.evt_handle, opts.url);
     evrythng_set_key(opts.evt_handle, opts.key);
     evrythng_set_certificate(opts.evt_handle, opts.cafile, opts.cafile ? strlen(opts.cafile) : 0);
