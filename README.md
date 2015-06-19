@@ -80,5 +80,5 @@ After sucessfull compilation you can launch demo application via ${build_dir}/ev
 ```
 ./build_debug/evrythng-demo -h
 ```
-will print help. Add "-c `pwd`/client.pem" option while establishing secure connection to ssl://mqtt.evrythng.com.
+will print help. Add "-c ./misc/client.pem" option while establishing secure connection to ssl://mqtt.evrythng.com.
 Using "--pub" demo applicaton will send random values from [0,100] range to provided property every 2 seconds.
