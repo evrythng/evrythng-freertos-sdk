@@ -3,16 +3,17 @@ project(evrythng-freertos-sdk)
 
 set(COMMON_PREFIX CMakeTimestamps)
 
-set(FreeRTOS_dir ${PROJECT_SOURCE_DIR}/FreeRTOS_Posix)
-set(FreeRTOS_Kernel_dir ${FreeRTOS_dir}/FreeRTOS_Kernel)
+set(FreeRTOS_dir ${PROJECT_SOURCE_DIR}/FreeRTOSV8.2.1/FreeRTOS/Source)
+set(FreeRTOS_Posix_dir ${PROJECT_SOURCE_DIR}/FreeRTOSV8.2.1_Posix)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/evrythng/tests)
 
-include_directories(${PROJECT_SOURCE_DIR}/evrythng)
-include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix)
-include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/FreeRTOS_Kernel/include)
-include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS_Posix/FreeRTOS_Kernel/portable/GCC/Posix)
+include_directories(${FreeRTOS_dir})
+include_directories(${FreeRTOS_dir}/include)
+include_directories(${FreeRTOS_Posix_dir})
+include_directories(${FreeRTOS_Posix_dir}/GCC/Posix)
 include_directories(${PROJECT_SOURCE_DIR}/mqtt/src)
+include_directories(${PROJECT_SOURCE_DIR}/evrythng)
 
 add_definitions(-DOPENSSL)
 add_definitions(-D__GCC_POSIX__=1)
@@ -24,7 +25,7 @@ add_definitions(-DNO_PERSISTENCE)
 add_definitions(-DCONFIG_IPV6)
 
 set(SRC evrythng-demo.c)
-include(cmake/freertos.cmake)
+include(cmake/FreeRTOSV8.2.1.cmake)
 include(cmake/mqtt.cmake)
 include(cmake/evrythng.cmake)
 include(cmake/toolchainfile.cmake)
