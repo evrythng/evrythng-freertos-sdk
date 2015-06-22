@@ -41,6 +41,8 @@
 #include <ctype.h>
 #endif
 
+#include <unistd.h>
+
 #include "Heap.h"
 
 int Socket_close_only(int socket);

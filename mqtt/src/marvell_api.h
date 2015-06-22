@@ -41,7 +41,6 @@ void time(time_t *c_time);
 #include <time.h>
 #include <stdbool.h>
 
-#define vSemaphoreDelete(...)
 #define rtc_time_get() time(NULL)
 #endif
 #include <string.h>
@@ -57,7 +56,7 @@ void time(time_t *c_time);
 
 //#define inet_ntop(__af,__src,__dst,__size) ipaddr_ntoa_r((__src),(__dst),(__size))
 
-#define time_t uint32_t
+//#define time_t uint32_t
 
 //ssize_t writev(int d, const struct iovec *iov, int iovcnt);
 //#define writev lwip_write

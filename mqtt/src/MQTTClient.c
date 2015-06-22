@@ -43,6 +43,8 @@
 #endif
 #endif
 
+#include <unistd.h>
+
 #include "MQTTClient.h"
 #if !defined(NO_PERSISTENCE)
 #include "MQTTPersistence.h"

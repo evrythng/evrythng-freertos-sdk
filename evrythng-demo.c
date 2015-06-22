@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    xTaskCreate(evrythng_task, (signed char*)"evrythng_task", 1024, (void*)&opts, 1, NULL);
+    xTaskCreate(evrythng_task, "evrythng_task", 1024, (void*)&opts, 1, NULL);
 
     evrythng_init_handle(&opts.evt_handle);
     evrythng_set_log_callback(opts.evt_handle, log_callback);
