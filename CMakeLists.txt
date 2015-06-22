@@ -4,7 +4,7 @@ project(evrythng-freertos-sdk)
 set(COMMON_PREFIX CMakeTimestamps)
 
 set(FreeRTOS_dir ${PROJECT_SOURCE_DIR}/FreeRTOSV8.2.1/FreeRTOS/Source)
-set(FreeRTOS_Posix_dir ${PROJECT_SOURCE_DIR}/FreeRTOSV8.2.1_Posix)
+set(FreeRTOS_Posix_dir ${PROJECT_SOURCE_DIR}/FreeRTOSV8.2.1/PosixPort)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/evrythng/tests)
 
