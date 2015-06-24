@@ -13,6 +13,7 @@ In order to compile sdk and run tests you should have the following software ins
 * make
 * CMake
 * Mosquitto MQTT broker running on a local machine with default settings.
+* libssl-dev
 
 The sdk was build and tested using the following versions of software:
 
@@ -21,6 +22,7 @@ The sdk was build and tested using the following versions of software:
 * GNU Make 3.81
 * cmake version 2.8.12.2
 * mosquitto version 1.4.2
+* libssl-dev version 1.0.1f-1ubuntu9
 
 ## Building
 
