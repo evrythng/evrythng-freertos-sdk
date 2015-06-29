@@ -28,6 +28,7 @@
 *.x86_64
 *.hex
 
+.exrc
 build_debug
 docs
 cscope.*
