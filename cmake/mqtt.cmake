@@ -1,21 +1,20 @@
 
-set(SRC
-    ${SRC}
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Clients.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Heap.c
-    #${PROJECT_SOURCE_DIR}/mqtt/src/Log.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/LinkedList.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Messages.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/MQTTClient.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/MQTTPacket.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/MQTTPacketOut.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/MQTTProtocolClient.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/MQTTProtocolOut.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/SSLSocket.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/TLSSocket.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Socket.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/SocketBuffer.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Thread.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/Tree.c
-    ${PROJECT_SOURCE_DIR}/mqtt/src/utf-8.c
+set(MQTT_SRC
+    ${evrythng-lib}/mqtt/src/Clients.c
+    ${evrythng-lib}/mqtt/src/Heap.c
+    #${evrythng-lib}/mqtt/src/Log.c
+    ${evrythng-lib}/mqtt/src/LinkedList.c
+    ${evrythng-lib}/mqtt/src/Messages.c
+    ${evrythng-lib}/mqtt/src/MQTTClient.c
+    ${evrythng-lib}/mqtt/src/MQTTPacket.c
+    ${evrythng-lib}/mqtt/src/MQTTPacketOut.c
+    ${evrythng-lib}/mqtt/src/MQTTProtocolClient.c
+    ${evrythng-lib}/mqtt/src/MQTTProtocolOut.c
+    ${evrythng-lib}/mqtt/src/SSLSocket.c
+    ${evrythng-lib}/mqtt/src/TLSSocket.c
+    ${evrythng-lib}/mqtt/src/Socket.c
+    ${evrythng-lib}/mqtt/src/SocketBuffer.c
+    ${evrythng-lib}/mqtt/src/Thread.c
+    ${evrythng-lib}/mqtt/src/Tree.c
+    ${evrythng-lib}/mqtt/src/utf-8.c
 )

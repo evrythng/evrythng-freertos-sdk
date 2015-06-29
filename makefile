@@ -70,4 +70,4 @@ docs:
 	doxygen misc/Doxyfile
 
 runtests: all
-	-$(BUILD_DIR)/evrythng/tests/evrythng-test
+	-$(BUILD_DIR)/evrythng-freertos-tests

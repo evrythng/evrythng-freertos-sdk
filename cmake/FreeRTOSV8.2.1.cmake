@@ -1,6 +1,5 @@
 
-set(SRC
-    ${SRC}
+set(FREERTOS_SRC
     ${FreeRTOS_dir}/list.c
     ${FreeRTOS_dir}/queue.c
     ${FreeRTOS_dir}/tasks.c 

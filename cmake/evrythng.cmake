@@ -1,5 +1,4 @@
 
-set(SRC
-    ${SRC}
-    ${PROJECT_SOURCE_DIR}/evrythng/evrythng.c 
+set(EVT_SRC
+    ${evrythng-lib}/evrythng/src/evrythng.c 
 )
