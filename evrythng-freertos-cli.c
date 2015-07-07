@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <time.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -62,12 +63,19 @@ void vApplicationIdleHook(void)
 static void evrythng_task(void* pvParameters)
 {
     cmd_opts* opts = (cmd_opts*)pvParameters;
+
+    log("Connecting to %s", opts->url);
+    while(evrythng_connect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
+        log("Retrying");
+        sleep(2);
+    }
+    log("Evrythng client Connected");
     
     if (opts->sub) 
     {
         log("Subscribing to property %s", opts->prop);
         evrythng_subscribe_thng_property(opts->evt_handle, opts->thng, opts->prop, print_property_callback);
-        while(1) vTaskDelay(2000);
+        while(1) sleep(2);
     } 
     else 
     {
@@ -78,7 +86,7 @@ static void evrythng_task(void* pvParameters)
             sprintf(msg, "[{\"value\": %d}]", value);
             log("Publishing value %d to property %s", value, opts->prop);
             evrythng_publish_thng_property(opts->evt_handle, opts->thng, opts->prop, msg, NULL);
-            vTaskDelay(2000);
+            sleep(2);
         }
     }
 }
@@ -180,7 +188,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    xTaskCreate(evrythng_task, "evrythng_task", 1024, (void*)&opts, 2, NULL);
+    xTaskCreate(evrythng_task, "evrythng_task", 1024, (void*)&opts, 1, NULL);
 
     evrythng_init_handle(&opts.evt_handle);
     evrythng_set_log_callback(opts.evt_handle, log_callback);
@@ -188,13 +196,6 @@ int main(int argc, char *argv[])
     evrythng_set_url(opts.evt_handle, opts.url);
     evrythng_set_key(opts.evt_handle, opts.key);
     evrythng_set_certificate(opts.evt_handle, opts.cafile, opts.cafile ? strlen(opts.cafile) : 0);
-
-    log("Connecting to %s", opts.url);
-    while(evrythng_connect(opts.evt_handle) != EVRYTHNG_SUCCESS) {
-        log("Retrying");
-        sleep(2);
-    }
-    log("Evrythng client Connected");
 
     vTaskStartScheduler();
 
