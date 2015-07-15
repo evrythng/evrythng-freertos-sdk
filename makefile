@@ -70,4 +70,4 @@ docs:
 	doxygen misc/Doxyfile
 
 runtests: all
-	-$(BUILD_DIR)/evrythng-freertos-tests
+	-cd evrythng-c-library && $(PROJECT_DIR)/$(BUILD_DIR)/evrythng-freertos-tests

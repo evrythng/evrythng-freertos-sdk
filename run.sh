@@ -10,3 +10,4 @@ PROP_NAME='property_1'
 CA_PATH='misc/client.pem'
 
 build_debug/evrythng-freertos-cli --pub -u ${SSL_URL} -t ${THNG_ID} -k ${API_KEY} -n ${PROP_NAME} -c ${CA_PATH}
+#build_debug/evrythng-freertos-cli --sub -u ${SSL_URL} -t ${THNG_ID} -k ${API_KEY} -n ${PROP_NAME} -c ${CA_PATH}

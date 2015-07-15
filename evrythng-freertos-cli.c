@@ -60,38 +60,6 @@ void vApplicationIdleHook(void)
 }
 
 
-static void evrythng_task(void* pvParameters)
-{
-    cmd_opts* opts = (cmd_opts*)pvParameters;
-
-    log("Connecting to %s", opts->url);
-    while(evrythng_connect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
-        log("Retrying");
-        sleep(2);
-    }
-    log("Evrythng client Connected");
-    
-    if (opts->sub) 
-    {
-        log("Subscribing to property %s", opts->prop);
-        evrythng_subscribe_thng_property(opts->evt_handle, opts->thng, opts->prop, print_property_callback);
-        while(1) sleep(2);
-    } 
-    else 
-    {
-        while(1) 
-        {
-            int value = rand() % 100;
-            char msg[128];
-            sprintf(msg, "[{\"value\": %d}]", value);
-            log("Publishing value %d to property %s", value, opts->prop);
-            evrythng_publish_thng_property(opts->evt_handle, opts->thng, opts->prop, msg, NULL);
-            sleep(2);
-        }
-    }
-}
-
-
 void log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
 {
     char msg[512];
@@ -116,10 +84,63 @@ void log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
     printf("%s\n", msg);
 }
 
+
 void conlost_callback(evrythng_handle_t h)
 {
     log("connection lost, exiting...");
 }
+
+
+#include <signal.h>
+void _sleep(int sec)
+{
+    sigset_t sigmask, oldsigmask;
+    sigfillset(&sigmask);
+    pthread_sigmask(SIG_SETMASK, &sigmask, &oldsigmask);
+    sleep(sec);
+    pthread_sigmask(SIG_SETMASK, &oldsigmask, 0);
+}
+
+
+static void evrythng_task(void* pvParameters)
+{
+    cmd_opts* opts = (cmd_opts*)pvParameters;
+
+    evrythng_init_handle(&opts->evt_handle);
+    evrythng_set_log_callback(opts->evt_handle, log_callback);
+    evrythng_set_conlost_callback(opts->evt_handle, conlost_callback);
+    evrythng_set_url(opts->evt_handle, opts->url);
+    evrythng_set_key(opts->evt_handle, opts->key);
+    evrythng_set_certificate(opts->evt_handle, opts->cafile, opts->cafile ? strlen(opts->cafile) : 0);
+
+
+    log("Connecting to %s", opts->url);
+    while(evrythng_connect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
+        log("Retrying");
+        sleep(2);
+    }
+    log("Evrythng client Connected");
+    
+    if (opts->sub) 
+    {
+        log("Subscribing to property %s", opts->prop);
+        evrythng_subscribe_thng_property(opts->evt_handle, opts->thng, opts->prop, print_property_callback);
+        while(1) sleep(1);
+    } 
+    else 
+    {
+        while(1) 
+        {
+            int value = rand() % 100;
+            char msg[128];
+            sprintf(msg, "[{\"value\": %d}]", value);
+            log("Publishing value %d to property %s", value, opts->prop);
+            evrythng_publish_thng_property(opts->evt_handle, opts->thng, opts->prop, msg, NULL);
+            _sleep(2);
+        }
+    }
+}
+
 
 void print_usage() {
     log("Usage: evrtthng_demo -s|-p -u URL -t THNG_ID -k KEY -n PROPERTY_NAME [-v VALUE] [-c CA_FILE]");
@@ -188,14 +209,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    xTaskCreate(evrythng_task, "evrythng_task", 1024, (void*)&opts, 1, NULL);
-
-    evrythng_init_handle(&opts.evt_handle);
-    evrythng_set_log_callback(opts.evt_handle, log_callback);
-    evrythng_set_conlost_callback(opts.evt_handle, conlost_callback);
-    evrythng_set_url(opts.evt_handle, opts.url);
-    evrythng_set_key(opts.evt_handle, opts.key);
-    evrythng_set_certificate(opts.evt_handle, opts.cafile, opts.cafile ? strlen(opts.cafile) : 0);
+    xTaskCreate(evrythng_task, "evrythng_task", 1024, (void*)&opts, 0, NULL);
 
     vTaskStartScheduler();
 
