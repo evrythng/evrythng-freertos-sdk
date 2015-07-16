@@ -2,9 +2,9 @@
 
 ## Overview
 
-evrythng-freertos-sdk is a C SDK that facilitates the interaction with the EVRYTHNG Cloud for FreeRTOS based projects. It is based on the Paho MQTT library and the Posix GCC Eclipse FreeRTOS Simulator. 
+evrythng-freertos-sdk is a C SDK for FreeRTOS that facilitates the interaction with the EVRYTHNG Cloud to create embedded applications. It is based on the [evrythng-c-sdk](https://github.com/evrythng/evrythng-c-library), Paho MQTT library and the Posix GCC Eclipse FreeRTOS Simulator. 
 
-It also contains demo application and unit tests to demonstrate the different endpoints of the [EVRYTHNG API](https://dashboard.evrythng.com/developers/apidoc).
+It also contains a minimal application and unit tests to demonstrate usage of the different endpoints of the [EVRYTHNG API](https://dashboard.evrythng.com/developers/apidoc).
 
 ## Installing
 
@@ -72,5 +72,5 @@ After sucessfull compilation you can launch demo application via ${build_dir}/ev
 ```
 ./build_debug/evrythng-demo -h
 ```
-will print help. Add "-c ./misc/client.pem" option while establishing secure connection to ssl://mqtt.evrythng.com.
-Using "--pub" demo applicaton will send random values from [0,100] range to provided property every 2 seconds.
+will print help. Add `-c ./misc/client.pem` option while establishing secure connection to `ssl://mqtt.evrythng.com`.
+Using `--pub`, the demo applicaton will send random values from [0,100] range to provided property every 2 seconds.
