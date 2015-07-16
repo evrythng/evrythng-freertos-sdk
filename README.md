@@ -9,11 +9,7 @@ Contains demo application and unit tests to demonstrate the use of API functions
 
 In order to compile sdk and run tests you should have the following software installed:
 
-* Standart GCC toolchain
-* make
-* CMake
-* Mosquitto MQTT broker running on a local machine with default settings.
-* libssl-dev
+`sudo apt-get install libssl-dev cmake build-essential`
 
 The sdk was build and tested using the following versions of software:
 
@@ -21,8 +17,9 @@ The sdk was build and tested using the following versions of software:
 * gcc (Ubuntu 4.8.2-19ubuntu1) 4.8.2
 * GNU Make 3.81
 * cmake version 2.8.12.2
-* mosquitto version 1.4.2
 * libssl-dev version 1.0.1f-1ubuntu9
+
+But should work with most Linux versions.
 
 ## Building
 
