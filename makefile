@@ -1,4 +1,5 @@
 PROJECT_DIR:=$(shell pwd)
+EVT_C_LIB_DIR:=${PROJECT_DIR}/evrythng-c-library
 
 ifeq ($(DEBUG),)
 	DEBUG := 1
@@ -37,6 +38,7 @@ endif
 .PHONY: build_dir all cleanall makefile docs
 
 all: build_dir
+	$(MAKE) -C ${EVT_C_LIB_DIR} gen_config
 	$(MAKE) -C $(BUILD_DIR) -f Makefile all
 
 ifeq ($(BUILD_DIR),.)
