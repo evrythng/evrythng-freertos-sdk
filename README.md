@@ -17,6 +17,7 @@ to include the submodules.
 ### API Account
 
 First, you need to create a free developer account for the [EVRYTHNG API](https://dashboard.evrythng.com).
+Go to evryhtng-c-library folder, read README->Prerequisites->point 2 and fill in the required info.
 
 ### Dependencies
 
