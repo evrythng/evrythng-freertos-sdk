@@ -2,7 +2,7 @@
 
 ## Overview
 
-evrythng-freertos-sdk is a C SDK for FreeRTOS that facilitates the interaction with the EVRYTHNG Cloud to create embedded applications. It is based on the [evrythng-c-sdk](https://github.com/evrythng/evrythng-c-library), Paho MQTT library and the Posix GCC Eclipse FreeRTOS Simulator. 
+The evrythng-freertos-sdk is a C SDK for FreeRTOS that facilitates the interaction with the EVRYTHNG Cloud to create embedded applications. It is based on the [evrythng-c-sdk](https://github.com/evrythng/evrythng-c-library), Paho MQTT library and the Posix GCC Eclipse FreeRTOS Simulator. 
 
 It also contains a minimal application and unit tests to demonstrate usage of the different endpoints of the [EVRYTHNG API](https://dashboard.evrythng.com/developers/apidoc).
 
@@ -14,10 +14,11 @@ Clone the repository with:
 
 to include the submodules.
 
-### API Account
+### EVRYTHNG account configuration
 
 First, you need to create a free developer account for the [EVRYTHNG API](https://dashboard.evrythng.com).
-Go to evryhtng-c-library folder, read README->Prerequisites->point 2 and fill in the required info.
+
+Then go to `evryhtng-c-library` folder, read README->Prerequisites->point 2 and fill in the required info.
 
 ### Dependencies
 
@@ -63,15 +64,20 @@ To delete the output directory
 ```
 make cleanall
 ```
-or simply rm -rf build_dir
+or simply `rm -rf build_dir`
 
 Note: that you should use DEBUG and BUILD_DIR options with all make commands if you used it to build the sdk.
 
 ## Runing the demo application
 
-After sucessfull compilation you can launch demo application via ${build_dir}/evrythng-demo command.
+After sucessfull compilation you can launch the demo application via the `${build_dir}/evrythng-demo` command:
 ```
 ./build_debug/evrythng-demo -h
 ```
-will print help. Add `-c ./misc/client.pem` option while establishing secure connection to `ssl://mqtt.evrythng.com`.
-Using `--pub`, the demo applicaton will send random values from [0,100] range to provided property every 2 seconds.
+this will print the demo app help. 
+
+### Options
+
+* To establish a secure connection to `ssl://mqtt.evrythng.com` add the: `-c ./misc/client.pem` option.
+
+* Use the `--pub` option to let the demo applicaton update the property with random values ([0,100]) every 2 seconds.
