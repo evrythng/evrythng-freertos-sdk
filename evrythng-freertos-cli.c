@@ -1,3 +1,8 @@
+/*
+ * (c) Copyright 2012 EVRYTHNG Ltd London / Zurich
+ * www.evrythng.com
+ */
+
 /**
  * The demo application for FreeRTOS which demonstrates how to
  * work with MQTT client. It connects to the Evrythng cloud and
