@@ -2,3 +2,7 @@
 	path = evrythng-c-library
     url = git@github.com:evrythng/evrythng-c-library.git
     branch = paho-mqtt
+[submodule "libs/evrythng/core"]
+	path = libs/evrythng/core
+	url = git@github.com:evrythng/evrythng-c-library.git
+	branch = external-sdk

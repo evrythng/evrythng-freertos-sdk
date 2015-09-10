@@ -1,5 +1,5 @@
 PROJECT_DIR:=$(shell pwd)
-EVT_C_LIB_DIR:=${PROJECT_DIR}/evrythng-c-library
+EVT_C_LIB_DIR:=${PROJECT_DIR}/libs/evrythng/core
 
 ifeq ($(DEBUG),)
 	DEBUG := 1

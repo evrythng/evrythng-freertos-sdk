@@ -20,7 +20,8 @@
 #include "task.h"
 #include "queue.h"
 #include "croutine.h"
-#include "evrythng.h"
+
+#include "evrythng/evrythng.h"
 
 #define log(_fmt_, ...) printf(_fmt_"\n\r", ##__VA_ARGS__)
 
@@ -90,9 +91,14 @@ void log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
 }
 
 
-void conlost_callback(evrythng_handle_t h)
+void conlost_callback(h)
 {
     log("connection lost, exiting...");
+}
+
+void conrestored_callback(h)
+{
+    log("connection restored");
 }
 
 
@@ -111,16 +117,14 @@ static void evrythng_task(void* pvParameters)
 {
     cmd_opts* opts = (cmd_opts*)pvParameters;
 
-    evrythng_init_handle(&opts->evt_handle);
-    evrythng_set_log_callback(opts->evt_handle, log_callback);
-    evrythng_set_conlost_callback(opts->evt_handle, conlost_callback);
-    evrythng_set_url(opts->evt_handle, opts->url);
-    evrythng_set_key(opts->evt_handle, opts->key);
-    evrythng_set_certificate(opts->evt_handle, opts->cafile, opts->cafile ? strlen(opts->cafile) : 0);
-
+    EvrythngInitHandle(&opts->evt_handle);
+    EvrythngSetLogCallback(opts->evt_handle, log_callback);
+    EvrythngSetConnectionCallbacks(opts->evt_handle, conlost_callback, conrestored_callback);
+    EvrythngSetUrl(opts->evt_handle, opts->url);
+    EvrythngSetKey(opts->evt_handle, opts->key);
 
     log("Connecting to %s", opts->url);
-    while(evrythng_connect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
+    while(EvrythngConnect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
         log("Retrying");
         sleep(2);
     }
@@ -129,7 +133,7 @@ static void evrythng_task(void* pvParameters)
     if (opts->sub) 
     {
         log("Subscribing to property %s", opts->prop);
-        evrythng_subscribe_thng_property(opts->evt_handle, opts->thng, opts->prop, print_property_callback);
+        EvrythngSubThngProperty(opts->evt_handle, opts->thng, opts->prop, 1, print_property_callback);
         while(1) sleep(1);
     } 
     else 
@@ -140,7 +144,7 @@ static void evrythng_task(void* pvParameters)
             char msg[128];
             sprintf(msg, "[{\"value\": %d}]", value);
             log("Publishing value %d to property %s", value, opts->prop);
-            evrythng_publish_thng_property(opts->evt_handle, opts->thng, opts->prop, msg, NULL);
+            EvrythngPubThngProperty(opts->evt_handle, opts->thng, opts->prop, msg);
             _sleep(2);
         }
     }
