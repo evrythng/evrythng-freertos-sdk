@@ -22,6 +22,7 @@
 #include "croutine.h"
 
 #include "evrythng/evrythng.h"
+#include "evrythng/platform.h"
 
 #define log(_fmt_, ...) printf(_fmt_"\n\r", ##__VA_ARGS__)
 
@@ -91,25 +92,14 @@ void log_callback(evrythng_log_level_t level, const char* fmt, va_list vl)
 }
 
 
-void conlost_callback(h)
+void conlost_callback()
 {
     log("connection lost, exiting...");
 }
 
-void conrestored_callback(h)
+void conrestored_callback()
 {
     log("connection restored");
-}
-
-
-#include <signal.h>
-void _sleep(int sec)
-{
-    sigset_t sigmask, oldsigmask;
-    sigfillset(&sigmask);
-    pthread_sigmask(SIG_SETMASK, &sigmask, &oldsigmask);
-    sleep(sec);
-    pthread_sigmask(SIG_SETMASK, &oldsigmask, 0);
 }
 
 
@@ -126,7 +116,7 @@ static void evrythng_task(void* pvParameters)
     log("Connecting to %s", opts->url);
     while(EvrythngConnect(opts->evt_handle) != EVRYTHNG_SUCCESS) {
         log("Retrying");
-        sleep(2);
+        platform_sleep(2000);
     }
     log("Evrythng client Connected");
     
@@ -134,7 +124,8 @@ static void evrythng_task(void* pvParameters)
     {
         log("Subscribing to property %s", opts->prop);
         EvrythngSubThngProperty(opts->evt_handle, opts->thng, opts->prop, 1, print_property_callback);
-        while(1) sleep(1);
+        while(1) platform_sleep(2000);
+ 
     } 
     else 
     {
@@ -145,7 +136,7 @@ static void evrythng_task(void* pvParameters)
             sprintf(msg, "[{\"value\": %d}]", value);
             log("Publishing value %d to property %s", value, opts->prop);
             EvrythngPubThngProperty(opts->evt_handle, opts->thng, opts->prop, msg);
-            _sleep(2);
+            platform_sleep(2);
         }
     }
 }

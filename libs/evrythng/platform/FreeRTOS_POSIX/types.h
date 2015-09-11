@@ -26,9 +26,13 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include <FreeRTOS.h>
+#include <task.h>
+
 typedef struct Timer
 {
-	struct timeval end_time;
+	portTickType xTicksToWait;
+	xTimeOutType xTimeOut;
 } Timer;
 
 typedef struct Network

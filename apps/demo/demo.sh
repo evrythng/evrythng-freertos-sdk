@@ -13,8 +13,8 @@ then
     exit_script
 fi
 
-source evrythng-c-library/Config
+source ./libs/evrythng/core/Config
 
 CA_PATH='evrythng-c-library/client.pem'
 
-build_debug/evrythng-freertos-cli --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1} -c ${CA_PATH}
+build_debug/apps/demo/evrythng-demo --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1} -c ${CA_PATH}

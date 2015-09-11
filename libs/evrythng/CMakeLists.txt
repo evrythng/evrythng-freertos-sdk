@@ -21,6 +21,11 @@ include_directories(${evrythng-lib}/core/embedded-mqtt/MQTTClient-C/src)
 include_directories(${evrythng-lib}/core/embedded-mqtt/MQTTPacket/src)
 include_directories(${evrythng-lib}/platform)
 
+include_directories(${FreeRTOS_dir})
+include_directories(${FreeRTOS_dir}/include)
+include_directories(${FreeRTOS_Posix_dir})
+include_directories(${FreeRTOS_Posix_dir}/GCC/Posix)
+
 add_definitions(-DFREERTOS_POSIX_PLATFORM)
 
 add_library(evrythng ${EVT_SRC})

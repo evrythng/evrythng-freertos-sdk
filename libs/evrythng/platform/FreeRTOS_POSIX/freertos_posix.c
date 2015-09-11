@@ -8,56 +8,83 @@
 #include "FreeRTOS_POSIX/types.h"
 #include "evrythng/platform.h"
 
-void TimerInit(Timer* timer)
+#define BLOCK_SIGNALS \
+    sigset_t sigfull, sigold;\
+    sigfillset(&sigfull);\
+    pthread_sigmask(SIG_SETMASK, &sigfull, &sigold);
+
+#define RESTORE_SIGNAL_MASK \
+    pthread_sigmask(SIG_SETMASK, &sigold, 0);
+
+void TimerInit(Timer* t)
 {
-	timer->end_time = (struct timeval){0, 0};
+    if (!t)
+    {
+        platform_printf("%s: invalid timer\n", __func__);
+        return;
+    }
+
+	t->xTicksToWait = 0;
+	memset(&t->xTimeOut, '\0', sizeof(t->xTimeOut));
 }
 
 
 void TimerDeinit(Timer* t)
 {
+    if (!t)
+    {
+        platform_printf("%s: invalid timer\n", __func__);
+        return;
+    }
 }
 
 
-char TimerIsExpired(Timer* timer)
+char TimerIsExpired(Timer* t)
 {
-	struct timeval now, res;
-	gettimeofday(&now, NULL);
-	timersub(&timer->end_time, &now, &res);		
-	return res.tv_sec < 0 || (res.tv_sec == 0 && res.tv_usec <= 0);
+    if (!t)
+    {
+        platform_printf("%s: invalid timer\n", __func__);
+        return -1;
+    }
+
+	return xTaskCheckForTimeOut(&t->xTimeOut, &t->xTicksToWait) == pdTRUE;
 }
 
 
-void TimerCountdownMS(Timer* timer, unsigned int timeout)
+void TimerCountdownMS(Timer* t, unsigned int ms)
 {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	struct timeval interval = {timeout / 1000, (timeout % 1000) * 1000};
-	timeradd(&now, &interval, &timer->end_time);
+    if (!t)
+    {
+        platform_printf("%s: invalid timer\n", __func__);
+        return;
+    }
+
+    t->xTicksToWait = (ms / (portTICK_RATE_MS));
+    vTaskSetTimeOutState(&t->xTimeOut); /* Record the time at which this function was entered. */
 }
 
 
-void TimerCountdown(Timer* timer, unsigned int timeout)
+int TimerLeftMS(Timer* t)
 {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	struct timeval interval = {timeout, 0};
-	timeradd(&now, &interval, &timer->end_time);
+    if (!t)
+    {
+        platform_printf("%s: invalid timer\n", __func__);
+        return 0;
+    }
+
+    /* if true -> timeout, else updates xTicksToWait to the number left */
+	if (xTaskCheckForTimeOut(&t->xTimeOut, &t->xTicksToWait) == pdTRUE)
+        return 0;
+	return (t->xTicksToWait <= 0) ? 0 : (t->xTicksToWait * (portTICK_RATE_MS));
 }
 
 
-int TimerLeftMS(Timer* timer)
-{
-	struct timeval now, res;
-	gettimeofday(&now, NULL);
-	timersub(&timer->end_time, &now, &res);
-	//printf("left %d ms\n", (res.tv_sec < 0) ? 0 : res.tv_sec * 1000 + res.tv_usec / 1000);
-	return (res.tv_sec < 0) ? 0 : res.tv_sec * 1000 + res.tv_usec / 1000;
-}
 
 
 int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
+    BLOCK_SIGNALS
+
 	struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
 	if (interval.tv_sec < 0 || (interval.tv_sec == 0 && interval.tv_usec <= 0))
 	{
@@ -90,12 +117,16 @@ int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 
     //platform_printf("%s recv bytes = %d\n", __func__, bytes);
 
+    RESTORE_SIGNAL_MASK
+
 	return bytes;
 }
 
 
 int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
+    BLOCK_SIGNALS
+
 	struct timeval tv;
 
 	tv.tv_sec = 0;  /* 30 Secs Timeout */
@@ -105,6 +136,8 @@ int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 	int	rc = send(n->my_socket, buffer, len, MSG_NOSIGNAL);
 
     //platform_printf("%s send bytes = %d\n", __func__, rc);
+
+    RESTORE_SIGNAL_MASK
 
 	return rc;
 }
@@ -118,6 +151,8 @@ void NetworkInit(Network* n)
 
 int NetworkConnect(Network* n, char* addr, int port)
 {
+    BLOCK_SIGNALS
+
 	int type = SOCK_STREAM;
 	struct sockaddr_in address;
 	int rc = -1;
@@ -158,6 +193,8 @@ int NetworkConnect(Network* n, char* addr, int port)
 		if (n->my_socket != -1)
 			rc = connect(n->my_socket, (struct sockaddr*)&address, sizeof(address));
 	}
+
+    RESTORE_SIGNAL_MASK
 
 	return rc;
 }
@@ -329,6 +366,7 @@ void platform_free(void* memory)
     free(memory);
 }
 
+
 int platform_printf(const char* fmt, ...)
 {
     va_list vl;
@@ -349,5 +387,29 @@ int platform_printf(const char* fmt, ...)
 
 void platform_sleep(int ms)
 {
-    usleep(ms * 1000);
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    int sec = ms / 1000;
+    ms = ms - sec * 1000;
+
+    ts.tv_nsec += ms * 1000000;
+    ts.tv_sec += ts.tv_nsec / 1000000000 + sec;
+    ts.tv_nsec = ts.tv_nsec % 1000000000;
+
+    do
+    {
+        struct timespec rem;
+        int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &rem);
+        if (ret && errno == EINTR)
+        {
+            ts = rem;
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+    while(1);
 }
