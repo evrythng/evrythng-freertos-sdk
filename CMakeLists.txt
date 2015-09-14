@@ -10,11 +10,7 @@ set(evrythng-lib ${PROJECT_SOURCE_DIR}/libs/evrythng)
 set(EXTRA_FLAGS "-Wall -Wno-unused-variable")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_FLAGS}")
 
-#include_directories(${evrythng-lib}/evrythng/include)
-#include_directories(${evrythng-lib}/mqtt/src)
-#include_directories(${evrythng-lib}/tests)
-
 add_subdirectory(${PROJECT_SOURCE_DIR}/apps/demo)
-#add_subdirectory(${PROJECT_SOURCE_DIR}/apps/tests)
+add_subdirectory(${PROJECT_SOURCE_DIR}/apps/tests)
 add_subdirectory(${PROJECT_SOURCE_DIR}/libs/evrythng)
 add_subdirectory(${PROJECT_SOURCE_DIR}/libs/FreeRTOSV8.2.1)

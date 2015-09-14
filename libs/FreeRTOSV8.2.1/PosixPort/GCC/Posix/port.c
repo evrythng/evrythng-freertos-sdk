@@ -398,7 +398,8 @@ void vPortSystemTickHandler( int sig )
     pthread_t xTaskToSuspend;
     pthread_t xTaskToResume;
 
-	if ( ( pdTRUE == xInterruptsEnabled ) && ( pdTRUE != xServicingTick ) )
+	//if ( ( pdTRUE == xInterruptsEnabled ) && ( pdTRUE != xServicingTick ) )
+	if ( ( pdTRUE != xServicingTick ) )
 	{
 		if ( 0 == pthread_mutex_trylock( &xSingleThreadMutex ) )
 		{

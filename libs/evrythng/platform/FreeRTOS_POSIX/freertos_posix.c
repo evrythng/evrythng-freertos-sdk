@@ -125,7 +125,7 @@ int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 
 int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
-    BLOCK_SIGNALS
+    //BLOCK_SIGNALS
 
 	struct timeval tv;
 
@@ -137,7 +137,7 @@ int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 
     //platform_printf("%s send bytes = %d\n", __func__, rc);
 
-    RESTORE_SIGNAL_MASK
+    //RESTORE_SIGNAL_MASK
 
 	return rc;
 }
@@ -399,17 +399,11 @@ void platform_sleep(int ms)
 
     do
     {
-        struct timespec rem;
-        int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &rem);
+        int ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, 0);
         if (ret && errno == EINTR)
-        {
-            ts = rem;
             continue;
-        }
         else
-        {
             break;
-        }
     }
     while(1);
 }
