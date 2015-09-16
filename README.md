@@ -18,7 +18,7 @@ to include the submodules.
 
 First, you need to create a free developer account for the [EVRYTHNG API](https://dashboard.evrythng.com).
 
-Then go to `evryhtng-c-library` folder, read README->Prerequisites->point 2 and fill in the required info.
+Then go to `libs/evrythng/core` folder, read `README->EVRYTHNG Configuration` and fill in the required info.
 
 ### Dependencies
 
@@ -70,14 +70,21 @@ Note: that you should use DEBUG and BUILD_DIR options with all make commands if 
 
 ## Runing the demo application
 
-After sucessfull compilation you can launch the demo application via the `${build_dir}/evrythng-demo` command:
+After sucessfull compilation you can launch the demo application:
 ```
-./build_debug/evrythng-demo -h
+${build_dir}/evrythng-demo -h
 ```
-this will print the demo app help. 
+this will print the demo app help. You can use a helpfull script `apps/demo/demo.sh` to run demo application.
 
-### Options
+## Runing tests application
 
-* To establish a secure connection to `ssl://mqtt.evrythng.com` add the: `-c ./misc/client.pem` option.
+After sucessfull compilation you can launch unit tests application:
+```
+make runtests
+```
 
-* Use the `--pub` option to let the demo applicaton update the property with random values ([0,100]) every 2 seconds.
+## Creating your own application
+
+1. Go to `apps` folder and copy-rename demo application
+2. Open CMakeLists.txt and `add_subdirectory(${PROJECT_SOURCE_DIR}/apps/<your app name)`
+3. You can now start building by typing `make` and running your application by calling `${build_dir}/apps/<your app dir>/<your app name>`
