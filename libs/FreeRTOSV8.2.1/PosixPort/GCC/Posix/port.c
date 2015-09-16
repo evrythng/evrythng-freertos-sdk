@@ -398,8 +398,7 @@ void vPortSystemTickHandler( int sig )
     pthread_t xTaskToSuspend;
     pthread_t xTaskToResume;
 
-	//if ( ( pdTRUE == xInterruptsEnabled ) && ( pdTRUE != xServicingTick ) )
-	if ( ( pdTRUE != xServicingTick ) )
+	if ( ( pdTRUE == xInterruptsEnabled ) && ( pdTRUE != xServicingTick ) )
 	{
 		if ( 0 == pthread_mutex_trylock( &xSingleThreadMutex ) )
 		{
@@ -750,6 +749,8 @@ portLONG lIndex;
 void vAssertCalled(const char* func, int line)
 {
     const unsigned long ulLongSleep = 1000UL;
+
+    printf("%s: %s: %d\n", __func__, func, line);
 
 	taskDISABLE_INTERRUPTS();
 	for( ;; )

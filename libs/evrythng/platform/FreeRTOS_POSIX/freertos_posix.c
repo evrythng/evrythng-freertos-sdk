@@ -16,6 +16,7 @@
 #define RESTORE_SIGNAL_MASK \
     pthread_sigmask(SIG_SETMASK, &sigold, 0);
 
+#if 0
 void TimerInit(Timer* t)
 {
     if (!t)
@@ -78,21 +79,97 @@ int TimerLeftMS(Timer* t)
 	return (t->xTicksToWait <= 0) ? 0 : (t->xTicksToWait * (portTICK_RATE_MS));
 }
 
+#else
+
+void TimerInit(Timer* timer)
+{
+	timer->end_time = (struct timeval){0, 0};
+}
 
 
+void TimerDeinit(Timer* t)
+{
+}
 
-int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
+
+char TimerIsExpired(Timer* timer)
+{
+	struct timeval now, res;
+	gettimeofday(&now, NULL);
+	timersub(&timer->end_time, &now, &res);		
+	return res.tv_sec < 0 || (res.tv_sec == 0 && res.tv_usec <= 0);
+}
+
+
+void TimerCountdownMS(Timer* timer, unsigned int timeout)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct timeval interval = {timeout / 1000, (timeout % 1000) * 1000};
+	timeradd(&now, &interval, &timer->end_time);
+}
+
+
+void TimerCountdown(Timer* timer, unsigned int timeout)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	struct timeval interval = {timeout, 0};
+	timeradd(&now, &interval, &timer->end_time);
+}
+
+
+int TimerLeftMS(Timer* timer)
+{
+	struct timeval now, res;
+	gettimeofday(&now, NULL);
+	timersub(&timer->end_time, &now, &res);
+	//printf("left %d ms\n", (res.tv_sec < 0) ? 0 : res.tv_sec * 1000 + res.tv_usec / 1000);
+	return (res.tv_sec < 0) ? 0 : res.tv_sec * 1000 + res.tv_usec / 1000;
+}
+
+#endif
+
+
+void NetworkInit(Network* n)
+{
+	n->my_socket = 0;
+    n->ssl_enabled = 0;
+}
+
+
+void NetworkSecuredInit(Network* n, const char* ca_buf, size_t ca_size)
+{
+    SSL_library_init();
+    SSL_load_error_strings();
+    ERR_load_BIO_strings();
+
+    n->ca_buf = ca_buf;
+    n->ca_size = ca_size;
+
+    n->ssl_enabled = 1;
+}
+
+
+static struct timeval ms_to_timeval(int timeout_ms)
+{
+	struct timeval timeout = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
+
+	if (timeout.tv_sec < 0 || (timeout.tv_sec == 0 && timeout.tv_usec <= 0))
+	{
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100;
+	}
+
+    return timeout;
+}
+
+
+static int network_unsecured_read(Network* n, unsigned char* buffer, int len, struct timeval tv)
 {
     BLOCK_SIGNALS
 
-	struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
-	if (interval.tv_sec < 0 || (interval.tv_sec == 0 && interval.tv_usec <= 0))
-	{
-		interval.tv_sec = 0;
-		interval.tv_usec = 100;
-	}
-
-	setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
+	setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
 
 	int bytes = 0;
 	while (bytes < len)
@@ -115,7 +192,7 @@ int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 			bytes += rc;
 	}
 
-    //platform_printf("%s recv bytes = %d\n", __func__, bytes);
+    //printf("%s recv bytes = %d\n", __func__, bytes);
 
     RESTORE_SIGNAL_MASK
 
@@ -123,19 +200,58 @@ int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 }
 
 
-int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
+static int network_secured_read(Network* n, unsigned char* buffer, int len, struct timeval tv)
+{
+    BLOCK_SIGNALS
+
+    int sock;
+    BIO_get_fd(n->bio, &sock);
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof tv);
+
+	int bytes = 0;
+	while (bytes < len)
+	{
+        int rc = BIO_read(n->bio, &buffer[bytes], (size_t)(len - bytes));
+
+        if (rc == 0)
+        {
+            bytes = 0;
+            break;
+        }
+        else if (rc < 0)
+		{
+            bytes = -1;
+            break;
+		}
+		else
+			bytes += rc;
+	}
+
+    //printf("%s recv bytes = %d\n", __func__, bytes);
+
+    RESTORE_SIGNAL_MASK
+
+	return bytes;
+}
+
+
+int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
+{
+    if (!n->ssl_enabled)
+        return network_unsecured_read(n, buffer, len, ms_to_timeval(timeout_ms));
+    else
+        return network_secured_read(n, buffer, len, ms_to_timeval(timeout_ms));
+}
+
+
+static int network_unsecured_write(Network* n, unsigned char* buffer, int len, struct timeval tv)
 {
     //BLOCK_SIGNALS
 
-	struct timeval tv;
-
-	tv.tv_sec = 0;  /* 30 Secs Timeout */
-	tv.tv_usec = timeout_ms * 1000;  // Not init'ing this can cause strange errors
-
-	setsockopt(n->my_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv,sizeof(struct timeval));
+	setsockopt(n->my_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof tv);
 	int	rc = send(n->my_socket, buffer, len, MSG_NOSIGNAL);
 
-    //platform_printf("%s send bytes = %d\n", __func__, rc);
+    //printf("%s sent bytes = %d\n", __func__, rc);
 
     //RESTORE_SIGNAL_MASK
 
@@ -143,13 +259,51 @@ int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 }
 
 
-void NetworkInit(Network* n)
+static int network_secured_write(Network* n, unsigned char* buffer, int len, struct timeval tv)
 {
-	n->my_socket = 0;
+    //BLOCK_SIGNALS
+
+    int sock;
+    BIO_get_fd(n->bio, &sock);
+	setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof tv);
+
+    int rc = BIO_write(n->bio, buffer, len);
+
+    //printf("%s sent bytes = %d\n", __func__, rc);
+
+    //RESTORE_SIGNAL_MASK
+
+	return rc;
 }
 
 
-int NetworkConnect(Network* n, char* addr, int port)
+int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
+{
+    if (n->ssl_enabled)
+        return network_secured_write(n, buffer, len, ms_to_timeval(timeout_ms));
+    else
+        return network_unsecured_write(n, buffer, len, ms_to_timeval(timeout_ms));
+}
+
+
+void NetworkDisconnect(Network* n)
+{
+    if (!n->ssl_enabled)
+    {
+        close(n->my_socket);
+    }
+    else
+    {
+        if (n->bio) BIO_free_all(n->bio);
+        if (n->ctx) SSL_CTX_free(n->ctx);
+
+        n->bio = 0;
+        n->ctx = 0;
+    }
+}
+
+
+static int network_unsecured_connect(Network* n, char* addr, int port)
 {
     BLOCK_SIGNALS
 
@@ -200,15 +354,97 @@ int NetworkConnect(Network* n, char* addr, int port)
 }
 
 
-void NetworkSecuredInit(Network* n, const char* ca_buf, size_t ca_size)
+static int network_secured_connect(Network* n, char* addr, int port)
 {
-    //TODO
+    BLOCK_SIGNALS
+
+	int rc = -1;
+
+    BIO* bio_mem = 0;
+    X509* cert = 0;
+
+    n->ctx = SSL_CTX_new(SSLv23_client_method());
+    if (!n->ctx)
+    {
+        printf("could not create ssl context: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    bio_mem = BIO_new_mem_buf((void*)n->ca_buf, n->ca_size);
+    if (!bio_mem)
+    {
+        printf("could not create BIO memory: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL );
+    if (!cert)
+    {
+        printf("could not read certificate: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    if (!SSL_CTX_add_extra_chain_cert(n->ctx, cert))
+    {
+        printf("failed to load certificate: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    X509_STORE* store = SSL_CTX_get_cert_store(n->ctx);
+    X509_STORE_add_cert(store, cert);
+
+    n->bio = BIO_new_ssl_connect(n->ctx);
+    if (!n->bio)
+    {
+        printf("failed to load certificate: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    BIO_get_ssl(n->bio, &n->ssl);
+    if (!n->ssl)
+    {
+        printf("failed to get ssl: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+    SSL_set_mode(n->ssl, SSL_MODE_AUTO_RETRY);
+
+    /* Attempt to connect */
+
+    BIO_set_conn_hostname(n->bio, addr);
+    BIO_set_conn_port(n->bio, "ssl");
+
+    /* Verify the connection opened and perform the handshake */
+
+    if (BIO_do_connect(n->bio) <= 0)
+    {
+        printf("failed to establish connection: %s\n", ERR_reason_error_string(ERR_get_error()));
+        goto exit;
+    }
+
+    long ret;
+    if ((ret = SSL_get_verify_result(n->ssl)) != X509_V_OK)
+    {
+        printf("verification failed: %ld\n", ret);
+    }
+
+    rc = 0;
+
+exit:
+    if (bio_mem)
+        BIO_free(bio_mem);
+
+    RESTORE_SIGNAL_MASK
+
+	return rc;
 }
 
 
-void NetworkDisconnect(Network* n)
+int NetworkConnect(Network* n, char* addr, int port)
 {
-	close(n->my_socket);
+    if (n->ssl_enabled)
+        return network_secured_connect(n, addr, port);
+    else
+        return network_unsecured_connect(n, addr, port);
 }
 
 
@@ -220,7 +456,7 @@ void MutexInit(Mutex* m)
         return;
     }
 
-    pthread_mutex_init(&m->mtx, 0);
+    vSemaphoreCreateBinary(m->mtx);
 }
 
 
@@ -232,7 +468,7 @@ void MutexDeinit(Mutex* m)
         return;
     }
 
-    pthread_mutex_destroy(&m->mtx);
+    vSemaphoreDelete(m->mtx);
 }
 
 
@@ -244,7 +480,9 @@ int MutexLock(Mutex* m)
         return -1;
     }
 
-    pthread_mutex_lock(&m->mtx);
+    if (xSemaphoreTake(m->mtx, portMAX_DELAY) == pdFALSE)
+        return -1;
+
     return 0;
 }
 
@@ -257,7 +495,9 @@ int MutexUnlock(Mutex* m)
         return -1;
     }
 
-    pthread_mutex_unlock(&m->mtx);
+    if (xSemaphoreGive(m->mtx) == pdFALSE)
+        return -1;
+
     return 0;
 }
 
@@ -266,7 +506,8 @@ void SemaphoreInit(Semaphore* s)
 {
     if (!s) 
         return;
-    sem_init(&s->sem, 0, 0);
+
+    s->sem = xSemaphoreCreateCounting(portMAX_DELAY, 0);
 }
 
 
@@ -274,7 +515,8 @@ void SemaphoreDeinit(Semaphore* s)
 {
     if (!s) 
         return;
-    sem_destroy(&s->sem);
+
+    vSemaphoreDelete(s->sem);
 }
 
 
@@ -282,7 +524,11 @@ int SemaphorePost(Semaphore* s)
 {
     if (!s) 
         return -1;
-    return sem_post(&s->sem);
+
+    if (xSemaphoreGive(s->sem) == pdFALSE)
+        return -1;
+
+    return 0;
 }
 
 
@@ -291,35 +537,21 @@ int SemaphoreWait(Semaphore* s, int timeout_ms)
     if (!s) 
         return -1;
     
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
+    if (xSemaphoreTake(s->sem, (timeout_ms * (portTICK_RATE_MS))) == pdFALSE)
+        return -1;
 
-    int sec = timeout_ms / 1000;
-    timeout_ms = timeout_ms - sec * 1000;
-
-    ts.tv_nsec += timeout_ms * 1000000;
-    ts.tv_sec += ts.tv_nsec / 1000000000 + sec;
-    ts.tv_nsec = ts.tv_nsec % 1000000000;
-
-    do 
-    {
-        int ret = sem_timedwait(&s->sem, &ts);
-        if (!ret) return 0;
-        else
-        { 
-            if (errno == EINTR) continue;
-            return -1;
-        }
-    } while(1);
-
-    return -1;
+    return 0;
 }
 
-static void* func_wrapper(void* arg)
+
+static void func_wrapper(void* arg)
 {
     Thread* t = (Thread*)arg;
     (*t->func)(t->arg);
-    return 0;
+
+    SemaphorePost(&t->join_sem);
+
+    while(1) vTaskDelay(100);
 }
 
 int ThreadCreate(Thread* t, 
@@ -331,20 +563,33 @@ int ThreadCreate(Thread* t,
     if (!t) return -1;
     t->func = func;
     t->arg = arg;
-    return pthread_create(&t->tid, 0, func_wrapper, t);
+
+    SemaphoreInit(&t->join_sem);
+
+    if (xTaskCreate(func_wrapper, name, stack_size, t, priority, &t->tid) != pdPASS)
+    {
+        SemaphoreDeinit(&t->join_sem);
+        return -1;
+    }
+
+    return 0;
 }
 
 
 int ThreadJoin(Thread* t, int timeout_ms)
 {
     if (!t) return -1;
-    return pthread_join(t->tid, 0);
+    return SemaphoreWait(&t->join_sem, timeout_ms);
 }
 
 
 int ThreadDestroy(Thread* t)
 {
     if (!t) return -1;
+
+    vTaskDelete(t->tid);
+
+    SemaphoreDeinit(&t->join_sem);
     return 0;
 }
 
@@ -387,6 +632,7 @@ int platform_printf(const char* fmt, ...)
 
 void platform_sleep(int ms)
 {
+#if 0
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
 
@@ -406,4 +652,7 @@ void platform_sleep(int ms)
             break;
     }
     while(1);
+#else
+    vTaskDelay(ms * portTICK_RATE_MS);
+#endif
 }

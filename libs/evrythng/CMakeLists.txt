@@ -30,3 +30,5 @@ add_definitions(-DFREERTOS_POSIX_PLATFORM)
 
 add_library(evrythng ${EVT_SRC})
 target_link_libraries(evrythng FreeRTOS)
+target_link_libraries(evrythng ssl)
+target_link_libraries(evrythng crypto)

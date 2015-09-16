@@ -6,53 +6,55 @@
 #if !defined(_MQTT_POSIX_)
 #define _MQTT_POSIX_
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 #include <netdb.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
 
-#include <stdlib.h>
-#include <string.h>
 #include <signal.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
+
+#include "openssl/bio.h"
+#include "openssl/ssl.h"
+#include "openssl/err.h"
+
 
 typedef struct Timer
 {
+#if 0
 	portTickType xTicksToWait;
 	xTimeOutType xTimeOut;
+#else
+	struct timeval end_time;
+#endif
 } Timer;
 
 typedef struct Network
 {
 	int my_socket;
+    int ssl_enabled;
+    SSL_CTX* ctx;
+    SSL*     ssl;
+    BIO*     bio;
+    const char* ca_buf;
+    size_t  ca_size;
 } Network;
 
 typedef struct Mutex
 {
-	pthread_mutex_t mtx;
+    SemaphoreHandle_t mtx;
 } Mutex;
 
 typedef struct Semaphore
 {
-    sem_t sem;
+    SemaphoreHandle_t sem;
 } Semaphore;
 
 typedef struct Thread
 {
-    pthread_t tid;
+    TaskHandle_t tid;
+    Semaphore join_sem;
     void* arg;
     void (*func)(void*);
 } Thread;

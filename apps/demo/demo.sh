@@ -17,4 +17,6 @@ source ./libs/evrythng/core/Config
 
 CA_PATH='evrythng-c-library/client.pem'
 
-build_debug/apps/demo/evrythng-demo --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1} -c ${CA_PATH}
+#gdb --args build_debug/apps/demo/evrythng-demo --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1}
+#valgrind --leak-check=full build_debug/apps/demo/evrythng-demo --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1}
+build_debug/apps/demo/evrythng-demo --$1 -u ${MQTT_URL} -t ${THNG_1} -k ${DEVICE_API_KEY} -n ${PROPERTY_1}
