@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
     action.sa_flags = 0;
     sigaction(SIGINT, &action, NULL);
 
-    ThreadCreate(&t, 5, "evrythng_task", evrythng_task, 8192, &opts);
+    platform_thread_create(&t, 5, "evrythng_task", evrythng_task, 8192, &opts);
 
     vTaskStartScheduler();
 

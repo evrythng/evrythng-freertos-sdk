@@ -5,7 +5,7 @@
 
 #include <stdarg.h>
 
-#include "FreeRTOS_POSIX/types.h"
+#include "platform_types.h"
 #include "evrythng/platform.h"
 
 #define BLOCK_SIGNALS \
@@ -17,7 +17,7 @@
     pthread_sigmask(SIG_SETMASK, &sigold, 0);
 
 #if 0
-void TimerInit(Timer* t)
+void platform_timer_init(Timer* t)
 {
     if (!t)
     {
@@ -40,7 +40,7 @@ void TimerDeinit(Timer* t)
 }
 
 
-char TimerIsExpired(Timer* t)
+char platform_timer_isexpired(Timer* t)
 {
     if (!t)
     {
@@ -52,7 +52,7 @@ char TimerIsExpired(Timer* t)
 }
 
 
-void TimerCountdownMS(Timer* t, unsigned int ms)
+void platform_timer_countdown(Timer* t, unsigned int ms)
 {
     if (!t)
     {
@@ -81,18 +81,18 @@ int TimerLeftMS(Timer* t)
 
 #else
 
-void TimerInit(Timer* timer)
+void platform_timer_init(Timer* timer)
 {
 	timer->end_time = (struct timeval){0, 0};
 }
 
 
-void TimerDeinit(Timer* t)
+void platform_timer_deinit(Timer* t)
 {
 }
 
 
-char TimerIsExpired(Timer* timer)
+char platform_timer_isexpired(Timer* timer)
 {
 	struct timeval now, res;
 	gettimeofday(&now, NULL);
@@ -101,7 +101,7 @@ char TimerIsExpired(Timer* timer)
 }
 
 
-void TimerCountdownMS(Timer* timer, unsigned int timeout)
+void platform_timer_countdown(Timer* timer, unsigned int timeout)
 {
 	struct timeval now;
 	gettimeofday(&now, NULL);
@@ -110,16 +110,7 @@ void TimerCountdownMS(Timer* timer, unsigned int timeout)
 }
 
 
-void TimerCountdown(Timer* timer, unsigned int timeout)
-{
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	struct timeval interval = {timeout, 0};
-	timeradd(&now, &interval, &timer->end_time);
-}
-
-
-int TimerLeftMS(Timer* timer)
+int platform_timer_left(Timer* timer)
 {
 	struct timeval now, res;
 	gettimeofday(&now, NULL);
@@ -131,14 +122,14 @@ int TimerLeftMS(Timer* timer)
 #endif
 
 
-void NetworkInit(Network* n)
+void platform_network_init(Network* n)
 {
 	n->my_socket = 0;
     n->ssl_enabled = 0;
 }
 
 
-void NetworkSecuredInit(Network* n, const char* ca_buf, size_t ca_size)
+void platform_network_securedinit(Network* n, const char* ca_buf, size_t ca_size)
 {
     SSL_library_init();
     SSL_load_error_strings();
@@ -235,7 +226,7 @@ static int network_secured_read(Network* n, unsigned char* buffer, int len, stru
 }
 
 
-int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int platform_network_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
     if (!n->ssl_enabled)
         return network_unsecured_read(n, buffer, len, ms_to_timeval(timeout_ms));
@@ -277,7 +268,7 @@ static int network_secured_write(Network* n, unsigned char* buffer, int len, str
 }
 
 
-int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int platform_network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
     if (n->ssl_enabled)
         return network_secured_write(n, buffer, len, ms_to_timeval(timeout_ms));
@@ -286,7 +277,7 @@ int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 }
 
 
-void NetworkDisconnect(Network* n)
+void platform_network_disconnect(Network* n)
 {
     if (!n->ssl_enabled)
     {
@@ -439,7 +430,7 @@ exit:
 }
 
 
-int NetworkConnect(Network* n, char* addr, int port)
+int platform_network_connect(Network* n, char* addr, int port)
 {
     if (n->ssl_enabled)
         return network_secured_connect(n, addr, port);
@@ -448,7 +439,7 @@ int NetworkConnect(Network* n, char* addr, int port)
 }
 
 
-void MutexInit(Mutex* m)
+void platform_mutex_init(Mutex* m)
 {
     if (!m)
     {
@@ -460,7 +451,7 @@ void MutexInit(Mutex* m)
 }
 
 
-void MutexDeinit(Mutex* m)
+void platform_mutex_deinit(Mutex* m)
 {
     if (!m)
     {
@@ -472,7 +463,7 @@ void MutexDeinit(Mutex* m)
 }
 
 
-int MutexLock(Mutex* m)
+int platform_mutex_lock(Mutex* m)
 {
     if (!m)
     {
@@ -487,7 +478,7 @@ int MutexLock(Mutex* m)
 }
 
 
-int MutexUnlock(Mutex* m)
+int platform_mutex_unlock(Mutex* m)
 {
     if (!m)
     {
@@ -502,7 +493,7 @@ int MutexUnlock(Mutex* m)
 }
 
 
-void SemaphoreInit(Semaphore* s)
+void platform_semaphore_init(Semaphore* s)
 {
     if (!s) 
         return;
@@ -511,7 +502,7 @@ void SemaphoreInit(Semaphore* s)
 }
 
 
-void SemaphoreDeinit(Semaphore* s)
+void platform_semaphore_deinit(Semaphore* s)
 {
     if (!s) 
         return;
@@ -520,7 +511,7 @@ void SemaphoreDeinit(Semaphore* s)
 }
 
 
-int SemaphorePost(Semaphore* s)
+int platform_semaphore_post(Semaphore* s)
 {
     if (!s) 
         return -1;
@@ -532,7 +523,7 @@ int SemaphorePost(Semaphore* s)
 }
 
 
-int SemaphoreWait(Semaphore* s, int timeout_ms)
+int platform_semaphore_wait(Semaphore* s, int timeout_ms)
 {
     if (!s) 
         return -1;
@@ -549,12 +540,12 @@ static void func_wrapper(void* arg)
     Thread* t = (Thread*)arg;
     (*t->func)(t->arg);
 
-    SemaphorePost(&t->join_sem);
+    platform_semaphore_post(&t->join_sem);
 
     while(1) vTaskDelay(100);
 }
 
-int ThreadCreate(Thread* t, 
+int platform_thread_create(Thread* t, 
         int priority, 
         const char* name, 
         void (*func)(void*), 
@@ -564,11 +555,11 @@ int ThreadCreate(Thread* t,
     t->func = func;
     t->arg = arg;
 
-    SemaphoreInit(&t->join_sem);
+    platform_semaphore_init(&t->join_sem);
 
     if (xTaskCreate(func_wrapper, name, stack_size, t, priority, &t->tid) != pdPASS)
     {
-        SemaphoreDeinit(&t->join_sem);
+        platform_semaphore_deinit(&t->join_sem);
         return -1;
     }
 
@@ -576,20 +567,20 @@ int ThreadCreate(Thread* t,
 }
 
 
-int ThreadJoin(Thread* t, int timeout_ms)
+int platform_thread_join(Thread* t, int timeout_ms)
 {
     if (!t) return -1;
-    return SemaphoreWait(&t->join_sem, timeout_ms);
+    return platform_semaphore_wait(&t->join_sem, timeout_ms);
 }
 
 
-int ThreadDestroy(Thread* t)
+int platform_thread_destroy(Thread* t)
 {
     if (!t) return -1;
 
     vTaskDelete(t->tid);
 
-    SemaphoreDeinit(&t->join_sem);
+    platform_semaphore_deinit(&t->join_sem);
     return 0;
 }
 

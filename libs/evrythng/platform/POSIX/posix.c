@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include "evrythng_platform.h"
 
-void TimerInit(Timer* timer)
+void platform_timer_init(Timer* timer)
 {
 	timer->end_time = (struct timeval){0, 0};
 }
@@ -18,7 +18,7 @@ void TimerDeinit(Timer* t)
 }
 
 
-char TimerIsExpired(Timer* timer)
+char platform_timer_isexpired(Timer* timer)
 {
 	struct timeval now, res;
 	gettimeofday(&now, NULL);
@@ -27,7 +27,7 @@ char TimerIsExpired(Timer* timer)
 }
 
 
-void TimerCountdownMS(Timer* timer, unsigned int timeout)
+void platform_timer_countdown(Timer* timer, unsigned int timeout)
 {
 	struct timeval now;
 	gettimeofday(&now, NULL);
@@ -55,7 +55,7 @@ int TimerLeftMS(Timer* timer)
 }
 
 
-int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int platform_network_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
 	struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
 	if (interval.tv_sec < 0 || (interval.tv_sec == 0 && interval.tv_usec <= 0))
@@ -93,7 +93,7 @@ int NetworkRead(Network* n, unsigned char* buffer, int len, int timeout_ms)
 }
 
 
-int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
+int platform_network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
 	struct timeval tv;
 
@@ -109,13 +109,13 @@ int NetworkWrite(Network* n, unsigned char* buffer, int len, int timeout_ms)
 }
 
 
-void NetworkInit(Network* n)
+void platform_network_init(Network* n)
 {
 	n->my_socket = 0;
 }
 
 
-int NetworkConnect(Network* n, char* addr, int port)
+int platform_network_connect(Network* n, char* addr, int port)
 {
 	int type = SOCK_STREAM;
 	struct sockaddr_in address;
@@ -162,19 +162,19 @@ int NetworkConnect(Network* n, char* addr, int port)
 }
 
 
-void NetworkSecuredInit(Network* n, const char* ca_buf, size_t ca_size)
+void platform_network_securedinit(Network* n, const char* ca_buf, size_t ca_size)
 {
     //TODO
 }
 
 
-void NetworkDisconnect(Network* n)
+void platform_network_disconnect(Network* n)
 {
 	close(n->my_socket);
 }
 
 
-void MutexInit(Mutex* m)
+void platform_mutex_init(Mutex* m)
 {
     if (!m)
     {
@@ -186,7 +186,7 @@ void MutexInit(Mutex* m)
 }
 
 
-void MutexDeinit(Mutex* m)
+void platform_mutex_deinit(Mutex* m)
 {
     if (!m)
     {
@@ -198,7 +198,7 @@ void MutexDeinit(Mutex* m)
 }
 
 
-int MutexLock(Mutex* m)
+int platform_mutex_lock(Mutex* m)
 {
     if (!m)
     {
@@ -211,7 +211,7 @@ int MutexLock(Mutex* m)
 }
 
 
-int MutexUnlock(Mutex* m)
+int platform_mutex_unlock(Mutex* m)
 {
     if (!m)
     {
@@ -224,7 +224,7 @@ int MutexUnlock(Mutex* m)
 }
 
 
-void SemaphoreInit(Semaphore* s)
+void platform_semaphore_init(Semaphore* s)
 {
     if (!s) 
         return;
@@ -232,7 +232,7 @@ void SemaphoreInit(Semaphore* s)
 }
 
 
-void SemaphoreDeinit(Semaphore* s)
+void platform_semaphore_deinit(Semaphore* s)
 {
     if (!s) 
         return;
@@ -240,7 +240,7 @@ void SemaphoreDeinit(Semaphore* s)
 }
 
 
-int SemaphorePost(Semaphore* s)
+int platform_semaphore_post(Semaphore* s)
 {
     if (!s) 
         return -1;
@@ -248,7 +248,7 @@ int SemaphorePost(Semaphore* s)
 }
 
 
-int SemaphoreWait(Semaphore* s, int timeout_ms)
+int platform_semaphore_wait(Semaphore* s, int timeout_ms)
 {
     if (!s) 
         return -1;
@@ -284,7 +284,7 @@ static void* func_wrapper(void* arg)
     return 0;
 }
 
-int ThreadCreate(Thread* t, 
+int platform_thread_create(Thread* t, 
         int priority, 
         const char* name, 
         void (*func)(void*), 
@@ -297,14 +297,14 @@ int ThreadCreate(Thread* t,
 }
 
 
-int ThreadJoin(Thread* t, int timeout_ms)
+int platform_thread_join(Thread* t, int timeout_ms)
 {
     if (!t) return -1;
     return pthread_join(t->tid, 0);
 }
 
 
-int ThreadDestroy(Thread* t)
+int platform_thread_destroy(Thread* t)
 {
     if (!t) return -1;
     return 0;

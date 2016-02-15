@@ -19,7 +19,7 @@ set (EVT_SRC
 include_directories(${evrythng-lib}/core/evrythng/include)
 include_directories(${evrythng-lib}/core/embedded-mqtt/MQTTClient-C/src)
 include_directories(${evrythng-lib}/core/embedded-mqtt/MQTTPacket/src)
-include_directories(${evrythng-lib}/platform)
+include_directories(${evrythng-lib}/platform/FreeRTOS_POSIX)
 
 include_directories(${FreeRTOS_dir})
 include_directories(${FreeRTOS_dir}/include)
