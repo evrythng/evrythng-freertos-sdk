@@ -4,7 +4,7 @@
 
 The evrythng-freertos-sdk is a C SDK for FreeRTOS that facilitates the interaction with the EVRYTHNG Cloud to create embedded applications. It is based on the [evrythng-c-sdk](https://github.com/evrythng/evrythng-c-library), Paho Embedded-MQTT library and the Posix GCC Eclipse FreeRTOS Simulator. 
 
-It also contains a minimal application and unit tests to demonstrate usage of the different endpoints of the [EVRYTHNG API](https://dashboard.evrythng.com/developers/apidoc).
+It also contains a minimal application and unit tests to demonstrate usage of the different endpoints of the [EVRYTHNG API](https://developers.evrythng.com/docs/evrythng-developer-resources).
 
 ## Installing
 
