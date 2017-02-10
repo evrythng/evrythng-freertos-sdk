@@ -647,3 +647,9 @@ void platform_sleep(int ms)
     vTaskDelay(ms * portTICK_RATE_MS);
 #endif
 }
+
+
+int platform_rand()
+{
+    return rand();
+}
