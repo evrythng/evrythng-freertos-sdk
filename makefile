@@ -38,7 +38,7 @@ endif
 .PHONY: build_dir all cleanall makefile docs
 
 all: build_dir
-	$(MAKE) -C ${EVT_C_LIB_DIR} gen_config
+	@${EVT_C_LIB_DIR}/tests/gen_header.sh $(PROJECT_DIR)/test_config ${EVT_C_LIB_DIR}/tests/evrythng_config.h
 	$(MAKE) -C $(BUILD_DIR) -f Makefile all
 
 ifeq ($(BUILD_DIR),.)

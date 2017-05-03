@@ -33,3 +33,4 @@ build_debug
 docs
 cscope.*
 tags
+test_config
